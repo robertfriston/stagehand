@@ -18,3 +18,7 @@ tmp/
 eval-summary.json
 pnpm-lock.yaml
 evals/deterministic/tests/BrowserContext/tmp-test.har
+
+# Jobenvy artefacts
+.next/
+coverage/
