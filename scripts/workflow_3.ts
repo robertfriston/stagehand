@@ -13,7 +13,7 @@ async function run() {
     verbose: 1,
     localBrowserLaunchOptions: {
       headless: false,
-      slowMo: 250, // small slow‑mo so you can see each step
+      //slowMo: 250, // small slow‑mo so you can see each step
     },
   });
   await sh.init();
