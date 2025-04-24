@@ -369,22 +369,6 @@ async function run() {
       await page.waitForTimeout(defaultTimeout);
       await page.getByText("Staging").click();
       await page.waitForTimeout(defaultTimeout);
-
-      // Login again after clicking Staging (using email as username here, matching helloDashboard)
-      // Note: This differs from the unconditional login above, matching helloDashboard's inconsistency
-      await page.getByTestId("username").click();
-      await page.waitForTimeout(defaultTimeout);
-      await page.getByTestId("username").fill(userCredentials.email);
-      await page.waitForTimeout(defaultTimeout);
-      await page.getByTestId("password").click();
-      await page.waitForTimeout(defaultTimeout);
-      await page.getByTestId("password").fill(userCredentials.password);
-      await page.waitForTimeout(defaultTimeout);
-      await page.getByTestId("agree").click();
-      await page.waitForTimeout(defaultTimeout);
-      await page.getByTestId("seek").click(); // Login button
-      await page.waitForTimeout(defaultTimeout);
-      console.log("Workflow 0: Logged back in after Staging click.");
     } else {
       console.log("Workflow 0: Second iteration complete.");
       // helloDashboard does nothing specific here after the unconditional login
