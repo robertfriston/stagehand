@@ -6,6 +6,16 @@ import dotenv from "dotenv"; // Ensure @types/dotenv is installed
 // Load environment variables from .env file
 dotenv.config();
 
+// --- User Credentials ---
+const userCredentials = {
+  firstname: "test",
+  lastname: "user3", // Unique last name for this workflow
+  email: "test.user3@jobenvy.co.uk", // Unique email
+  username: "testuser3", // Unique username
+  password: "testuser",
+};
+// --- End User Credentials ---
+
 async function run() {
   console.log("Starting Workflow 3"); // Added identifier
   const sh = new Stagehand({
@@ -38,30 +48,28 @@ async function run() {
 
     //================
     //PHASE ONE
-    // [Original PHASE ONE logic from single_test.ts goes here]
-    // ... (Copy the entire PHASE ONE block) ...
     await page.waitForTimeout(defaultTimeout);
     await page.getByTestId("signin").click();
     await page.waitForTimeout(defaultTimeout);
     await page.getByTestId("firstNamesString").click();
     await page.waitForTimeout(defaultTimeout);
-    await page.getByTestId("firstNamesString").fill("test");
+    await page.getByTestId("firstNamesString").fill(userCredentials.firstname); // Use constant
     await page.waitForTimeout(defaultTimeout);
     await page.getByTestId("lastNameString").click();
     await page.waitForTimeout(defaultTimeout);
-    await page.getByTestId("lastNameString").fill("user3"); // Modified lastname
+    await page.getByTestId("lastNameString").fill(userCredentials.lastname); // Use constant
     await page.waitForTimeout(defaultTimeout);
     await page.getByTestId("email").click();
     await page.waitForTimeout(defaultTimeout);
-    await page.getByTestId("email").fill("test.user3@jobenvy.co.uk"); // Modified email for uniqueness
+    await page.getByTestId("email").fill(userCredentials.email); // Use constant
     await page.waitForTimeout(defaultTimeout);
     await page.getByTestId("username").click();
     await page.waitForTimeout(defaultTimeout);
-    await page.getByTestId("username").fill("testuser3"); // Modified username
+    await page.getByTestId("username").fill(userCredentials.username); // Use constant
     await page.waitForTimeout(defaultTimeout);
     await page.getByTestId("password").click();
     await page.waitForTimeout(defaultTimeout);
-    await page.getByTestId("password").fill("testuser");
+    await page.getByTestId("password").fill(userCredentials.password); // Use constant
     await page.waitForTimeout(defaultTimeout);
     await page.getByTestId("agree").click();
     await page.waitForTimeout(defaultTimeout);
@@ -93,11 +101,11 @@ async function run() {
     await page.waitForTimeout(defaultTimeout);
     await page.getByTestId("username").click();
     await page.waitForTimeout(defaultTimeout);
-    await page.getByTestId("username").fill("testuser3"); // Modified username
+    await page.getByTestId("username").fill(userCredentials.username); // Use constant
     await page.waitForTimeout(defaultTimeout);
     await page.getByTestId("password").click();
     await page.waitForTimeout(defaultTimeout);
-    await page.getByTestId("password").fill("testuser");
+    await page.getByTestId("password").fill(userCredentials.password); // Use constant
     await page.waitForTimeout(defaultTimeout);
     await page.getByTestId("agree").click();
     await page.waitForTimeout(defaultTimeout);
@@ -116,7 +124,7 @@ async function run() {
     const now = new Date();
     const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
     const environmentLabel = i === 0 ? "LOCAL" : "STAGING"; // Determine label based on iteration
-    const nameWithTimestamp = `Test W3 ${environmentLabel} [${timestamp}]`; // Construct the name
+    const nameWithTimestamp = `${userCredentials.firstname} W3 ${environmentLabel} [${timestamp}]`;
     await page.getByTestId("firstNamesString").fill(nameWithTimestamp);
     await page.waitForTimeout(defaultTimeout);
 
@@ -148,11 +156,13 @@ async function run() {
     // Try signup first
     try {
       await page.getByTestId("firstNamesString").click({ timeout: 5000 });
-      await page.getByTestId("firstNamesString").fill("test");
-      await page.getByTestId("lastNameString").fill("user3"); // Unique last name
-      await page.getByTestId("email").fill("test.user3@jobenvy.co.uk"); // Unique email
-      await page.getByTestId("username").fill("testuser3"); // Unique username
-      await page.getByTestId("password").fill("testuser");
+      await page
+        .getByTestId("firstNamesString")
+        .fill(userCredentials.firstname); // Use constant
+      await page.getByTestId("lastNameString").fill(userCredentials.lastname); // Use constant
+      await page.getByTestId("email").fill(userCredentials.email); // Use constant
+      await page.getByTestId("username").fill(userCredentials.username); // Use constant
+      await page.getByTestId("password").fill(userCredentials.password); // Use constant
       await page.getByTestId("agree").click();
       await page.getByRole("button", { name: "Sign Up" }).click();
       await page.waitForTimeout(defaultTimeout);
@@ -172,11 +182,11 @@ async function run() {
     // Login
     await page.getByTestId("username").click();
     await page.waitForTimeout(defaultTimeout);
-    await page.getByTestId("username").fill("testuser3"); // Use unique username
+    await page.getByTestId("username").fill(userCredentials.username); // Use constant
     await page.waitForTimeout(defaultTimeout);
     await page.getByTestId("password").click();
     await page.waitForTimeout(defaultTimeout);
-    await page.getByTestId("password").fill("testuser");
+    await page.getByTestId("password").fill(userCredentials.password); // Use constant
     await page.waitForTimeout(defaultTimeout);
     await page.getByTestId("agree").click();
     await page.waitForTimeout(defaultTimeout);
@@ -256,8 +266,6 @@ async function run() {
 
     //================
     //PHASE TWO
-    // [Original PHASE TWO logic from single_test.ts goes here]
-    // ... (Copy the entire PHASE TWO block) ...
     console.log("Workflow 3: Starting Phase Two");
     await page.goto("http://localhost:3000/dashboard/jobseeker/"); // Use consistent URL
     await page.waitForTimeout(defaultTimeout);
@@ -357,11 +365,11 @@ async function run() {
     console.log("Workflow 3: Logging back in for next step/iteration");
     await page.getByTestId("username").click();
     await page.waitForTimeout(defaultTimeout);
-    await page.getByTestId("username").fill("testuser3"); // Use unique username
+    await page.getByTestId("username").fill(userCredentials.username); // Use constant
     await page.waitForTimeout(defaultTimeout);
     await page.getByTestId("password").click();
     await page.waitForTimeout(defaultTimeout);
-    await page.getByTestId("password").fill("testuser");
+    await page.getByTestId("password").fill(userCredentials.password); // Use constant
     await page.waitForTimeout(defaultTimeout);
     await page.getByTestId("agree").click();
     await page.waitForTimeout(defaultTimeout);
