@@ -23,7 +23,7 @@ async function run() {
     verbose: 1,
     localBrowserLaunchOptions: {
       headless: false,
-      slowMo: 250, // Match helloDashboard's slowMo
+      //slowMo: 250, // Match helloDashboard's slowMo
     },
   });
   await sh.init();
@@ -35,7 +35,7 @@ async function run() {
   const remoteUrl =
     process.env.REMOTE_URL ?? "https://jobenvy-v6-824.nodechef.com/login";
   const targetUrl = targetEnvironment === "LOCAL" ? localUrl : remoteUrl;
-  const defaultTimeout = targetEnvironment === "REMOTE" ? 2000 : 2000; // Use the same timeout logic as helloDashboard for exact replication
+  const defaultTimeout = 2000; // Use the same timeout logic as helloDashboard for exact replication
   // --- End Configuration ---
 
   await page.waitForTimeout(2000); // Match initial wait
