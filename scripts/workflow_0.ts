@@ -23,7 +23,7 @@ async function run() {
     verbose: 1,
     localBrowserLaunchOptions: {
       headless: false,
-      //slowMo: 250, // Match helloDashboard's slowMo for exact replication during debugging if needed
+      slowMo: 250, // Match helloDashboard's slowMo
     },
   });
   await sh.init();
@@ -76,20 +76,13 @@ async function run() {
     await page.getByRole("button", { name: "Sign Up" }).click();
     await page.waitForTimeout(defaultTimeout);
 
-    //DEPENDS ON IF ALREADY SIGNUP - Keep try/catch for robustness, but align logic
-    try {
-      await page.getByRole("button", { name: "OK" }).click({ timeout: 5000 });
-      await page.waitForTimeout(defaultTimeout);
-    } catch (error) {
-      console.log(
-        "Workflow 0: 'OK' button after signup not found or timed out, continuing...",
-        error instanceof Error ? error.message : error,
-      );
-    }
+    //DEPENDS ON IF ALREADY SIGNUP - Match helloDashboard (direct click)
+    await page.getByRole("button", { name: "OK" }).click();
+    await page.waitForTimeout(defaultTimeout);
 
-    //THIS CAN FAIL TO SWITCH THE TAB BACK - Keep try/catch for robustness
+    //THIS CAN FAIL TO SWITCH THE TAB BACK - Keep try/catch but remove timeout
     try {
-      await page.getByTestId("login").click({ timeout: 5000 });
+      await page.getByTestId("login").click(); // Removed timeout
       console.log("Workflow 0: Clicked login tab/button successfully.");
     } catch (error) {
       console.warn(
@@ -183,15 +176,10 @@ async function run() {
     await page.waitForTimeout(defaultTimeout);
     await page.getByRole("button", { name: "Sign Up" }).click();
     await page.waitForTimeout(defaultTimeout);
-    try {
-      await page.getByRole("button", { name: "OK" }).click({ timeout: 5000 });
-      await page.waitForTimeout(defaultTimeout);
-    } catch (error) {
-      console.log(
-        "Workflow 0: 'OK' button after second signup not found or timed out, continuing...",
-        error instanceof Error ? error.message : error,
-      );
-    }
+    // Match helloDashboard (direct click)
+    await page.getByRole("button", { name: "OK" }).click();
+    await page.waitForTimeout(defaultTimeout);
+
     await page.getByTestId("username").click();
     await page.waitForTimeout(defaultTimeout);
     await page.getByTestId("username").fill(userCredentials.email);
@@ -218,26 +206,20 @@ async function run() {
     await page.locator("img").click();
     await page.waitForTimeout(defaultTimeout);
 
-    // CHATBOT Interaction 1 - Keep try/catch but align text if needed
-    try {
-      await page.getByText("Start A Chat").click({ timeout: 10000 });
-      await page.waitForTimeout(defaultTimeout);
-      await page.getByTestId("RNE__Input__text-input").click();
-      await page.waitForTimeout(defaultTimeout);
-      await page
-        .getByTestId("RNE__Input__text-input")
-        .fill("hi - help me update my master resume");
-      await page.waitForTimeout(5000);
-      await page.getByText("").click();
-      await page.waitForTimeout(5000);
-      await page.getByText("Close Your Agent").click();
-      await page.waitForTimeout(defaultTimeout);
-    } catch (error) {
-      console.warn(
-        "Workflow 0: Chatbot interaction 1 failed.",
-        error instanceof Error ? error.message : error,
-      );
-    }
+    // CHATBOT Interaction 1 - Match helloDashboard (direct click, no try/catch)
+    await page.getByText("Start A Chat").click(); // Removed timeout and try/catch
+    await page.waitForTimeout(defaultTimeout);
+    await page.getByTestId("RNE__Input__text-input").click();
+    await page.waitForTimeout(defaultTimeout);
+    await page
+      .getByTestId("RNE__Input__text-input")
+      .fill("hi - help me update my master resume");
+    await page.waitForTimeout(5000);
+    await page.getByText("").click();
+    await page.waitForTimeout(5000);
+    await page.getByText("Close Your Agent").click();
+    // Removed extra waitForTimeout(defaultTimeout) that was here
+    //===================
 
     await page.waitForTimeout(defaultTimeout);
     await page.getByText("Back").click();
@@ -245,30 +227,23 @@ async function run() {
     await page.locator("img").first().click();
     await page.waitForTimeout(defaultTimeout);
 
-    // CHATBOT Interaction 2 - Keep try/catch but align text and waits
-    try {
-      await page.getByText("Start A Chat").click({ timeout: 10000 });
-      await page.waitForTimeout(5000);
-      await page.getByTestId("RNE__Input__text-input").click();
-      await page.waitForTimeout(defaultTimeout);
-      await page
-        .getByTestId("RNE__Input__text-input")
-        .fill(
-          "what is the job situation like in Brighton UK for software engineering roles?",
-        );
-      await page.waitForTimeout(5000);
-      await page.getByText("").click();
-      await page.waitForTimeout(5000);
-      await page.waitForTimeout(5000);
-      await page.waitForTimeout(5000);
-      await page.getByText("Close Your Agent").click();
-      await page.waitForTimeout(defaultTimeout);
-    } catch (error) {
-      console.warn(
-        "Workflow 0: Chatbot interaction 2 failed.",
-        error instanceof Error ? error.message : error,
+    // CHATBOT Interaction 2 - Match helloDashboard (direct click, no try/catch)
+    await page.getByText("Start A Chat").click(); // Removed timeout and try/catch
+    await page.waitForTimeout(5000);
+    await page.getByTestId("RNE__Input__text-input").click();
+    await page.waitForTimeout(defaultTimeout);
+    await page
+      .getByTestId("RNE__Input__text-input")
+      .fill(
+        "what is the job situation like in Brighton UK for software engineering roles?",
       );
-    }
+    await page.waitForTimeout(5000);
+    await page.getByText("").click();
+    await page.waitForTimeout(5000);
+    await page.waitForTimeout(5000);
+    await page.waitForTimeout(5000);
+    await page.getByText("Close Your Agent").click();
+    await page.waitForTimeout(defaultTimeout);
 
     //================
     //PHASE TWO
@@ -280,7 +255,7 @@ async function run() {
       .locator("div")
       .filter({ hasText: /^MASTER RESUME90% Complete$/ })
       .getByTestId("listItemTitle")
-      .click({ timeout: 10000 });
+      .click(); // Removed timeout
     await page.waitForTimeout(defaultTimeout);
     await page.getByText("").nth(1).click();
     await page.waitForTimeout(defaultTimeout);
@@ -347,27 +322,56 @@ async function run() {
     await page.waitForTimeout(defaultTimeout);
     await page.getByRole("button", { name: "log out" }).click();
     await page.waitForTimeout(defaultTimeout);
-    try {
-      await page.getByRole("button", { name: "OK" }).click({ timeout: 5000 });
+    // Match helloDashboard (direct click)
+    await page.getByRole("button", { name: "OK" }).click();
+    await page.waitForTimeout(defaultTimeout);
+
+    // << --- Start: Replicate helloDashboard's exact end-of-loop staging/login logic --- >>
+
+    // Staging click for the second iteration (i == 1) - AFTER logout/OK
+    if (i == 1) {
+      //staging only
+      console.log("Workflow 0: Clicking Staging (Iteration 2)");
       await page.waitForTimeout(defaultTimeout);
-    } catch (error) {
-      console.log(
-        "Workflow 0: 'OK' button after logout not found or timed out, continuing...",
-        error instanceof Error ? error.message : error,
-      );
+      await page.getByText("Staging").click(); // Assuming 'Staging' text exists and is clickable
+      await page.waitForTimeout(defaultTimeout);
     }
 
-    // << --- Start: Replicate helloDashboard's end-of-loop staging/login logic --- >>
+    // Unconditional login attempt (matches helloDashboard's structure)
+    await page.getByTestId("username").click();
+    await page.waitForTimeout(defaultTimeout);
+    await page.getByTestId("username").fill(userCredentials.username); // Use username from credentials
+    await page.waitForTimeout(defaultTimeout);
+    await page.getByTestId("password").click();
+    await page.waitForTimeout(defaultTimeout);
+    await page.getByTestId("password").fill(userCredentials.password);
+    await page.waitForTimeout(defaultTimeout);
+    await page.getByTestId("agree").click();
+    await page.waitForTimeout(defaultTimeout);
+    await page.getByTestId("seek").click(); // Login button
+    await page.waitForTimeout(defaultTimeout);
 
-    // Staging click and login for the first iteration (i === 0)
+    // If it's the first iteration, do the extra logout/staging/login sequence
     if (i === 0) {
       console.log(
-        "Workflow 0: First iteration complete. Clicking Staging and logging in again.",
+        "Workflow 0: First iteration complete. Clicking Staging and logging in again (matching helloDashboard).",
       );
+
+      // Replicate helloDashboard's potentially redundant logout
+      await page.waitForTimeout(defaultTimeout);
+      await page.getByTestId("left_nav_button").getByText("Home").click();
+      await page.waitForTimeout(defaultTimeout);
+      await page.getByRole("button", { name: "log out" }).click();
+      await page.waitForTimeout(defaultTimeout);
+      await page.getByRole("button", { name: "OK" }).click(); // Direct click
+
+      // Click Staging
       await page.waitForTimeout(defaultTimeout);
       await page.getByText("Staging").click();
       await page.waitForTimeout(defaultTimeout);
 
+      // Login again after clicking Staging (using email as username here, matching helloDashboard)
+      // Note: This differs from the unconditional login above, matching helloDashboard's inconsistency
       await page.getByTestId("username").click();
       await page.waitForTimeout(defaultTimeout);
       await page.getByTestId("username").fill(userCredentials.email);
@@ -378,33 +382,19 @@ async function run() {
       await page.waitForTimeout(defaultTimeout);
       await page.getByTestId("agree").click();
       await page.waitForTimeout(defaultTimeout);
-      await page.getByTestId("seek").click();
+      await page.getByTestId("seek").click(); // Login button
       await page.waitForTimeout(defaultTimeout);
       console.log("Workflow 0: Logged back in after Staging click.");
     } else {
       console.log("Workflow 0: Second iteration complete.");
-      await page.getByTestId("username").click();
-      await page.waitForTimeout(defaultTimeout);
-      await page.getByTestId("username").fill(userCredentials.email);
-      await page.waitForTimeout(defaultTimeout);
-      await page.getByTestId("password").click();
-      await page.waitForTimeout(defaultTimeout);
-      await page.getByTestId("password").fill(userCredentials.password);
-      await page.waitForTimeout(defaultTimeout);
-      await page.getByTestId("agree").click();
-      await page.waitForTimeout(defaultTimeout);
-      await page.getByTestId("seek").click();
-      await page.waitForTimeout(defaultTimeout);
-      console.log("Workflow 0: Final login after second iteration.");
+      // helloDashboard does nothing specific here after the unconditional login
     }
-    // << --- End: Replicate helloDashboard's end-of-loop staging/login logic --- >>
-  }
+    // << --- End: Replicate helloDashboard's exact end-of-loop staging/login logic --- >>
+  } // End of for loop
 
   console.log("Workflow 0 completed twice. Pausing.");
   await page.pause();
 }
 
-run().catch((error) => {
-  console.error("Workflow 0 failed:", error);
-  process.exit(1);
-});
+// Match helloDashboard's simpler catch
+run().catch(console.error);
