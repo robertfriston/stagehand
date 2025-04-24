@@ -25,7 +25,7 @@ async function run() {
   const remoteUrl =
     process.env.REMOTE_URL ?? "https://jobenvy-v6-824.nodechef.com/login";
   const targetUrl = targetEnvironment === "LOCAL" ? localUrl : remoteUrl;
-  const defaultTimeout = targetEnvironment === "REMOTE" ? 2000 : 2000;
+  const defaultTimeout = 2000; // Simplified timeout
   // --- End Configuration ---
 
   await page.waitForTimeout(2000);
@@ -38,8 +38,6 @@ async function run() {
 
     //================
     //PHASE ONE
-    // [Original PHASE ONE logic from single_test.ts goes here]
-    // ... (Copy the entire PHASE ONE block) ...
     await page.waitForTimeout(defaultTimeout);
     await page.getByTestId("signin").click();
     await page.waitForTimeout(defaultTimeout);
@@ -72,9 +70,10 @@ async function run() {
     try {
       await page.getByRole("button", { name: "OK" }).click({ timeout: 5000 }); // Add timeout
       await page.waitForTimeout(defaultTimeout);
-    } catch (e) {
+    } catch (error) {
       console.log(
         "Workflow 1: 'OK' button after signup not found or timed out, continuing...",
+        error instanceof Error ? error.message : error,
       );
     }
 
@@ -85,7 +84,7 @@ async function run() {
     } catch (error) {
       console.warn(
         "Workflow 1: Could not click login tab/button, continuing execution:",
-        error.message,
+        error instanceof Error ? error.message : error,
       );
     }
 
@@ -158,10 +157,10 @@ async function run() {
       await page.getByRole("button", { name: "OK" }).click({ timeout: 5000 }); // Handle potential existing user dialog
       await page.waitForTimeout(defaultTimeout);
       console.log("Workflow 1: Signup successful or handled existing user.");
-    } catch (e) {
+    } catch (error) {
       console.log(
         "Workflow 1: Signup failed or element not found, attempting login.",
-        e.message,
+        error instanceof Error ? error.message : error,
       );
       // If signup elements aren't there, assume we need to login
       await page.getByTestId("login").click({ timeout: 5000 }); // Switch to login tab
@@ -200,12 +199,20 @@ async function run() {
       await page.waitForTimeout(10000); // Wait longer for response
       await page.getByText("Close Your Agent").click();
       await page.waitForTimeout(defaultTimeout);
-    } catch (e) {
-      console.warn("Workflow 1: Chatbot interaction 1 failed.", e.message);
+    } catch (error) {
+      console.warn(
+        "Workflow 1: Chatbot interaction 1 failed.",
+        error instanceof Error ? error.message : error,
+      );
       // Try to navigate back if possible
       try {
         await page.getByText("Back").click();
-      } catch {}
+      } catch (backError) {
+        console.warn(
+          "Workflow 1: Could not click Back after Chatbot 1 failure.",
+          backError instanceof Error ? backError.message : backError,
+        );
+      }
     }
 
     // CHATBOT Interaction 2
@@ -230,17 +237,23 @@ async function run() {
       await page.waitForTimeout(15000); // Wait even longer
       await page.getByText("Close Your Agent").click();
       await page.waitForTimeout(defaultTimeout);
-    } catch (e) {
-      console.warn("Workflow 1: Chatbot interaction 2 failed.", e.message);
+    } catch (error) {
+      console.warn(
+        "Workflow 1: Chatbot interaction 2 failed.",
+        error instanceof Error ? error.message : error,
+      );
       try {
         await page.getByText("Back").click();
-      } catch {}
+      } catch (backError) {
+        console.warn(
+          "Workflow 1: Could not click Back after Chatbot 2 failure.",
+          backError instanceof Error ? backError.message : backError,
+        );
+      }
     }
 
     //================
     //PHASE TWO
-    // [Original PHASE TWO logic from single_test.ts goes here]
-    // ... (Copy the entire PHASE TWO block) ...
     console.log("Workflow 1: Starting Phase Two");
     await page.goto("http://localhost:3000/dashboard/jobseeker/"); // Use consistent URL
     await page.waitForTimeout(defaultTimeout);
@@ -280,7 +293,6 @@ async function run() {
         .nth(3)
         .click();
       await page.waitForTimeout(defaultTimeout);
-      // This selector seems fragile, might need adjustment if UI changes
       await page
         .locator(
           "div:nth-child(2) > div > div > div:nth-child(2) > div > div > div:nth-child(2) > div > div > div > div > div > div > div > div",
@@ -312,12 +324,20 @@ async function run() {
       await page.waitForTimeout(defaultTimeout);
       await page.getByText("Back").click();
       await page.waitForTimeout(defaultTimeout);
-    } catch (e) {
-      console.error("Workflow 1: Error during Phase Two.", e.message);
+    } catch (error) {
+      console.error(
+        "Workflow 1: Error during Phase Two.",
+        error instanceof Error ? error.message : error,
+      );
       // Attempt to navigate home regardless of where the error occurred
       try {
         await page.goto("http://localhost:3000/dashboard/jobseeker/");
-      } catch {}
+      } catch (gotoError) {
+        console.error(
+          "Workflow 1: Failed to navigate home after Phase Two error.",
+          gotoError instanceof Error ? gotoError.message : gotoError,
+        );
+      }
     }
 
     // Logout and prepare for next iteration or staging switch
@@ -345,22 +365,16 @@ async function run() {
     console.log("Workflow 1: Logged back in.");
 
     // If it's the first iteration, click Staging and prepare for the second run
-    // NOTE: The original script seemed to intend to run the *same* workflow again on Staging.
-    // This setup runs independent workflows. If you want each workflow to hit both Local and Staging,
-    // the logic within *this* file needs to be adjusted.
     if (i === 0) {
       console.log(
         "Workflow 1: First iteration complete. Preparing for second iteration (still on LOCAL).",
       );
-      // No staging switch here as per current parallel setup
-      // If you wanted this workflow to *also* test staging, you'd add staging logic here.
     } else {
       console.log("Workflow 1: Second iteration complete.");
     }
   }
 
   console.log("Workflow 1 completed twice. Closing.");
-  // await page.pause(); // Remove pause for automated runs
   await sh.close();
 }
 

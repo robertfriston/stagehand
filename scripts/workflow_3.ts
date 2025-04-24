@@ -25,7 +25,7 @@ async function run() {
   const remoteUrl =
     process.env.REMOTE_URL ?? "https://jobenvy-v6-824.nodechef.com/login";
   const targetUrl = targetEnvironment === "LOCAL" ? localUrl : remoteUrl;
-  const defaultTimeout = targetEnvironment === "REMOTE" ? 2000 : 2000;
+  const defaultTimeout = 2000; // Simplified timeout
   // --- End Configuration ---
 
   await page.waitForTimeout(2000);
@@ -72,9 +72,10 @@ async function run() {
     try {
       await page.getByRole("button", { name: "OK" }).click({ timeout: 5000 }); // Add timeout
       await page.waitForTimeout(defaultTimeout);
-    } catch (e) {
+    } catch (error) {
       console.log(
         "Workflow 3: 'OK' button after signup not found or timed out, continuing...",
+        error instanceof Error ? error.message : error,
       );
     }
 
@@ -85,7 +86,7 @@ async function run() {
     } catch (error) {
       console.warn(
         "Workflow 3: Could not click login tab/button, continuing execution:",
-        error.message,
+        error instanceof Error ? error.message : error,
       );
     }
 
@@ -158,10 +159,10 @@ async function run() {
       await page.getByRole("button", { name: "OK" }).click({ timeout: 5000 }); // Handle potential existing user dialog
       await page.waitForTimeout(defaultTimeout);
       console.log("Workflow 3: Signup successful or handled existing user.");
-    } catch (e) {
+    } catch (error) {
       console.log(
         "Workflow 3: Signup failed or element not found, attempting login.",
-        e.message,
+        error instanceof Error ? error.message : error,
       );
       // If signup elements aren't there, assume we need to login
       await page.getByTestId("login").click({ timeout: 5000 }); // Switch to login tab
@@ -200,12 +201,20 @@ async function run() {
       await page.waitForTimeout(10000); // Wait longer for response
       await page.getByText("Close Your Agent").click();
       await page.waitForTimeout(defaultTimeout);
-    } catch (e) {
-      console.warn("Workflow 3: Chatbot interaction 1 failed.", e.message);
+    } catch (error) {
+      console.warn(
+        "Workflow 3: Chatbot interaction 1 failed.",
+        error instanceof Error ? error.message : error,
+      );
       // Try to navigate back if possible
       try {
         await page.getByText("Back").click();
-      } catch {}
+      } catch (backError) {
+        console.warn(
+          "Workflow 3: Could not click Back after Chatbot 1 failure.",
+          backError instanceof Error ? backError.message : backError,
+        );
+      }
     }
 
     // CHATBOT Interaction 2
@@ -230,11 +239,19 @@ async function run() {
       await page.waitForTimeout(15000); // Wait even longer
       await page.getByText("Close Your Agent").click();
       await page.waitForTimeout(defaultTimeout);
-    } catch (e) {
-      console.warn("Workflow 3: Chatbot interaction 2 failed.", e.message);
+    } catch (error) {
+      console.warn(
+        "Workflow 3: Chatbot interaction 2 failed.",
+        error instanceof Error ? error.message : error,
+      );
       try {
         await page.getByText("Back").click();
-      } catch {}
+      } catch (backError) {
+        console.warn(
+          "Workflow 3: Could not click Back after Chatbot 2 failure.",
+          backError instanceof Error ? backError.message : backError,
+        );
+      }
     }
 
     //================
@@ -312,12 +329,20 @@ async function run() {
       await page.waitForTimeout(defaultTimeout);
       await page.getByText("Back").click();
       await page.waitForTimeout(defaultTimeout);
-    } catch (e) {
-      console.error("Workflow 3: Error during Phase Two.", e.message);
+    } catch (error) {
+      console.error(
+        "Workflow 3: Error during Phase Two.",
+        error instanceof Error ? error.message : error,
+      );
       // Attempt to navigate home regardless of where the error occurred
       try {
         await page.goto("http://localhost:3000/dashboard/jobseeker/");
-      } catch {}
+      } catch (gotoError) {
+        console.error(
+          "Workflow 3: Failed to navigate home after Phase Two error.",
+          gotoError instanceof Error ? gotoError.message : gotoError,
+        );
+      }
     }
 
     // Logout and prepare for next iteration or staging switch
