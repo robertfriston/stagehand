@@ -62,11 +62,6 @@ async function runTestForUser(user: (typeof users)[0]) {
         `[${user.userId}] === Starting Environment: ${env.name} (Iteration ${i + 1}) ===`,
       );
 
-      // Generate unique intermediate credentials for this user
-      const intermediateEmail = `${user.userId}_intermediate@jobenvy.co.uk`;
-      const intermediateUsername = `${user.userId}_intermediate`;
-      const intermediatePassword = "intermediatePass"; // Or derive from user.password if needed
-
       // 1. Navigate to Login Page for the current environment
       console.log(`[${user.userId}][${env.name}] Navigating to: ${env.url}`);
       await page.goto(env.url);
@@ -79,34 +74,35 @@ async function runTestForUser(user: (typeof users)[0]) {
       //================
       //PHASE ONE
 
-      // --- Sign-up attempt (using UNIQUE intermediate values) ---
+      // --- Sign-up attempt (using CURRENT USER's credentials) ---
       console.log(
-        `[${user.userId}][${env.name}] Attempting sign-up with intermediate values: ${intermediateEmail}`,
+        `[${user.userId}][${env.name}] Attempting sign-up with USER credentials: ${user.email}`,
       );
       try {
         await page.getByTestId("signin").click();
         await page.waitForTimeout(defaultTimeout);
         await page.getByTestId("firstNamesString").click();
         await page.waitForTimeout(defaultTimeout);
+        const nameParts = user.userId.split("_");
         await page
           .getByTestId("firstNamesString")
-          .fill(user.userId.split("_")[0]); // Use base part of userId
+          .fill(nameParts[0] || user.userId);
         await page.waitForTimeout(defaultTimeout);
         await page.getByTestId("lastNameString").click();
         await page.waitForTimeout(defaultTimeout);
-        await page.getByTestId("lastNameString").fill("Intermediate"); // Generic last name
+        await page.getByTestId("lastNameString").fill(nameParts[1] || "User");
         await page.waitForTimeout(defaultTimeout);
         await page.getByTestId("email").click();
         await page.waitForTimeout(defaultTimeout);
-        await page.getByTestId("email").fill(intermediateEmail); // Use unique intermediate email
+        await page.getByTestId("email").fill(user.email); // Use user's email
         await page.waitForTimeout(defaultTimeout);
         await page.getByTestId("username").click();
         await page.waitForTimeout(defaultTimeout);
-        await page.getByTestId("username").fill(intermediateUsername); // Use unique intermediate username
+        await page.getByTestId("username").fill(user.userId); // Use user's userId for username field
         await page.waitForTimeout(defaultTimeout);
         await page.getByTestId("password").click();
         await page.waitForTimeout(defaultTimeout);
-        await page.getByTestId("password").fill(intermediatePassword); // Use intermediate password
+        await page.getByTestId("password").fill(user.password); // Use user's password
         await page.waitForTimeout(defaultTimeout);
         await page.getByTestId("agree").click();
         await page.waitForTimeout(defaultTimeout);
@@ -116,12 +112,12 @@ async function runTestForUser(user: (typeof users)[0]) {
         // Handle potential "already exists" dialog
         await page.getByRole("button", { name: "OK" }).click({ timeout: 5000 });
         console.log(
-          `[${user.userId}][${env.name}] Clicked OK after intermediate sign-up attempt.`,
+          `[${user.userId}][${env.name}] Clicked OK after sign-up attempt with user credentials.`,
         );
         await page.waitForTimeout(defaultTimeout);
       } catch (error: unknown) {
         console.warn(
-          `[${user.userId}][${env.name}] Intermediate sign-up attempt or OK button failed: ${error instanceof Error ? error.message : String(error)}`,
+          `[${user.userId}][${env.name}] Sign-up attempt with user credentials or OK button failed: ${error instanceof Error ? error.message : String(error)}`,
         );
         // Attempt to recover by ensuring login tab is visible
         try {
@@ -145,18 +141,18 @@ async function runTestForUser(user: (typeof users)[0]) {
       }
       await page.waitForTimeout(defaultTimeout);
 
-      // --- Primary Login attempt (using the specific user's credentials) ---
+      // --- Primary Login attempt (using CURRENT USER's credentials) ---
       console.log(
         `[${user.userId}][${env.name}] Attempting primary login with email: ${user.email}`,
       );
       try {
         await page.getByTestId("username").click();
         await page.waitForTimeout(defaultTimeout / 2);
-        await page.getByTestId("username").fill(user.email); // Use user-specific email
+        await page.getByTestId("username").fill(user.email); // Use user's email
         await page.waitForTimeout(defaultTimeout);
         await page.getByTestId("password").click();
         await page.waitForTimeout(defaultTimeout / 2);
-        await page.getByTestId("password").fill(user.password); // Use user-specific password
+        await page.getByTestId("password").fill(user.password); // Use user's password
         await page.waitForTimeout(defaultTimeout);
         try {
           await page.getByTestId("agree").click();
@@ -227,35 +223,35 @@ async function runTestForUser(user: (typeof users)[0]) {
       await page.getByRole("button", { name: "OK" }).click();
       await page.waitForTimeout(defaultTimeout); // Wait after clicking OK
 
-      // --- Intermediate Sign-up attempt (using UNIQUE intermediate values) ---
+      // --- Intermediate Sign-up attempt (using CURRENT USER's credentials) ---
       console.warn(
-        `[${user.userId}][${env.name}] Attempting intermediate sign-up with UNIQUE intermediate values: ${intermediateEmail}`,
+        `[${user.userId}][${env.name}] Attempting intermediate sign-up with USER credentials: ${user.email}. This is likely problematic.`,
       );
       try {
-        // It's possible the delete account action logged the user out or changed state
         await page.getByTestId("signin").click();
         await page.waitForTimeout(defaultTimeout);
         await page.getByTestId("firstNamesString").click();
         await page.waitForTimeout(defaultTimeout);
+        const nameParts = user.userId.split("_");
         await page
           .getByTestId("firstNamesString")
-          .fill(user.userId.split("_")[0]); // Use base part of userId
+          .fill(nameParts[0] || user.userId);
         await page.waitForTimeout(defaultTimeout);
         await page.getByTestId("lastNameString").click();
         await page.waitForTimeout(defaultTimeout);
-        await page.getByTestId("lastNameString").fill("Intermediate"); // Generic last name
+        await page.getByTestId("lastNameString").fill(nameParts[1] || "User");
         await page.waitForTimeout(defaultTimeout);
         await page.getByTestId("email").click();
         await page.waitForTimeout(defaultTimeout);
-        await page.getByTestId("email").fill(intermediateEmail); // Use unique intermediate email
+        await page.getByTestId("email").fill(user.email); // Use user's email
         await page.waitForTimeout(defaultTimeout);
         await page.getByTestId("username").click();
         await page.waitForTimeout(defaultTimeout);
-        await page.getByTestId("username").fill(intermediateUsername); // Use unique intermediate username
+        await page.getByTestId("username").fill(user.userId); // Use user's userId for username field
         await page.waitForTimeout(defaultTimeout);
         await page.getByTestId("password").click();
         await page.waitForTimeout(defaultTimeout);
-        await page.getByTestId("password").fill(intermediatePassword); // Use intermediate password
+        await page.getByTestId("password").fill(user.password); // Use user's password
         await page.waitForTimeout(defaultTimeout);
         await page.getByTestId("agree").click();
         await page.waitForTimeout(defaultTimeout);
@@ -280,26 +276,21 @@ async function runTestForUser(user: (typeof users)[0]) {
         await page.waitForTimeout(defaultTimeout);
       }
 
-      // --- Intermediate Login attempt (using UNIQUE intermediate values) ---
+      // --- Intermediate Login attempt (using CURRENT USER's credentials) ---
       console.warn(
-        `[${user.userId}][${env.name}] Attempting intermediate login with UNIQUE intermediate values: ${intermediateEmail}`,
+        `[${user.userId}][${env.name}] Attempting intermediate login with USER credentials: ${user.email}.`,
       );
       try {
-        // Ensure login tab is active
-        try {
-          await page.getByTestId("login").click();
-        } catch {
-          /* ignore */
-        }
+        await page.getByTestId("login").click();
         await page.waitForTimeout(defaultTimeout / 2);
 
         await page.getByTestId("username").click();
         await page.waitForTimeout(defaultTimeout);
-        await page.getByTestId("username").fill(intermediateEmail); // Use unique intermediate email
+        await page.getByTestId("username").fill(user.email); // Use user's email
         await page.waitForTimeout(defaultTimeout);
         await page.getByTestId("password").click();
         await page.waitForTimeout(defaultTimeout);
-        await page.getByTestId("password").fill(intermediatePassword); // Use intermediate password
+        await page.getByTestId("password").fill(user.password); // Use user's password
         await page.waitForTimeout(defaultTimeout);
         try {
           await page.getByTestId("agree").click();
@@ -569,11 +560,8 @@ async function runTestForUser(user: (typeof users)[0]) {
           console.log(
             `[${user.userId}][${env.name}] Logout Dialog message: ${dialog.message}`,
           );
-          // In original, OK button was clicked after dialog.accept()
-          // Let's accept the dialog here
           dialog.accept().catch(() => {});
         });
-        // The original clicked OK *after* setting up the dialog listener
         await page.getByRole("button", { name: "OK" }).click();
         console.log(`[${user.userId}][${env.name}] Logged out successfully.`);
         await page.waitForTimeout(defaultTimeout); // Wait after logout action
@@ -583,25 +571,18 @@ async function runTestForUser(user: (typeof users)[0]) {
         );
       }
 
-      // --- Re-login attempt with UNIQUE intermediate credentials ---
-      // NOTE: The original script re-logged in with 'testuser'.
-      // To avoid conflicts, we'll use the unique intermediate credentials here too.
+      // --- Re-login attempt with CURRENT USER's credentials ---
       console.warn(
-        `[${user.userId}][${env.name}] Attempting re-login with UNIQUE intermediate credentials at end of iteration...`,
+        `[${user.userId}][${env.name}] Attempting re-login with USER credentials at end of iteration: ${user.email}`,
       );
       try {
-        // Need to ensure we are on login page after logout
-        // Optional: Force navigation back to login?
-        // await page.goto(env.url);
-        // await page.waitForTimeout(defaultTimeout);
-
         await page.getByTestId("username").click();
         await page.waitForTimeout(defaultTimeout);
-        await page.getByTestId("username").fill(intermediateEmail); // Use unique intermediate email
+        await page.getByTestId("username").fill(user.email); // Use user's email
         await page.waitForTimeout(defaultTimeout);
         await page.getByTestId("password").click();
         await page.waitForTimeout(defaultTimeout);
-        await page.getByTestId("password").fill(intermediatePassword); // Use intermediate password
+        await page.getByTestId("password").fill(user.password); // Use user's password
         await page.waitForTimeout(defaultTimeout);
         try {
           await page.getByTestId("agree").click();
@@ -611,7 +592,6 @@ async function runTestForUser(user: (typeof users)[0]) {
         }
         await page.getByTestId("seek").click();
         await page.waitForTimeout(defaultTimeout); // Wait after seek
-        // Check if dashboard is reached again
         const expectedDashboardPattern = isLocal
           ? /localhost.*dashboard/
           : /jobenvy-v6-824\.nodechef\.com.*dashboard/;
@@ -623,20 +603,14 @@ async function runTestForUser(user: (typeof users)[0]) {
         console.warn(
           `[${user.userId}][${env.name}] Re-login attempt at end of iteration failed: ${error instanceof Error ? error.message : String(error)}`,
         );
-        // If this fails, the next iteration (if any) might start in a bad state.
       }
 
       // --- Staging click logic from original (only if i === 0, which means LOCAL env) ---
-      // This seems intended to switch the *browser state* to staging for the next loop iteration
-      // However, our loop handles the URL change. Including it for exactness, but it might be redundant/confusing.
       if (i === 0) {
-        // Only after the LOCAL run
         console.log(
           `[${user.userId}][${env.name}] First iteration complete. Clicking Staging button (as per original script).`,
         );
         try {
-          // The original script logged out *before* clicking Staging here.
-          // Let's add that logout sequence again for precision.
           await page.waitForTimeout(defaultTimeout);
           await page.getByTestId("left_nav_button").getByText("Home").click();
           await page.waitForTimeout(defaultTimeout);
@@ -651,12 +625,10 @@ async function runTestForUser(user: (typeof users)[0]) {
             `[${user.userId}][${env.name}] Logged out before clicking Staging.`,
           );
 
-          // Now click Staging
           await page.waitForTimeout(defaultTimeout);
           await page.getByText("Staging").click();
           await page.waitForTimeout(defaultTimeout);
           console.log(`[${user.userId}][${env.name}] Clicked Staging button.`);
-          // The next iteration will start by navigating to the STAGING URL anyway.
         } catch (error: unknown) {
           console.warn(
             `[${user.userId}][${env.name}] Logout or Staging click failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -665,10 +637,6 @@ async function runTestForUser(user: (typeof users)[0]) {
       } else {
         console.log(`[${user.userId}][${env.name}] Second iteration complete.`);
       }
-
-      // ==============================================================
-      // END: Exact workflow from helloDashboard.ts
-      // ==============================================================
 
       console.log(`[${user.userId}] === Finished Environment: ${env.name} ===`);
     } // End of environment loop
@@ -697,7 +665,6 @@ async function runTestForUser(user: (typeof users)[0]) {
   console.log(`Default Timeout: ${defaultTimeout}ms, SlowMo: ${slowMo}ms`);
 
   try {
-    // Run tests for all users in parallel
     await Promise.all(users.map((user) => runTestForUser(user)));
     console.log("All parallel test runs initiated and completed (or failed).");
   } catch (error: unknown) {
