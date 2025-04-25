@@ -2,8 +2,14 @@
 import { spawn, ChildProcess } from "child_process"; // Import ChildProcess
 import path from "path";
 
-//const scriptsToRun = ["workflow_1.ts", "workflow_2.ts", "workflow_3.ts"];
-const scriptsToRun = ["workflow_0.ts"];
+const scriptsToRun = [
+  "workflow_0.ts",
+  "workflow_1.ts",
+  "workflow_2.ts",
+  "workflow_3.ts",
+  "workflow_4.ts",
+];
+//const scriptsToRun = ["workflow_0.ts"];
 
 const scriptDir = __dirname; // Gets the directory where start_parallel_tests.ts resides
 const processes: ChildProcess[] = []; // Explicitly type the array
