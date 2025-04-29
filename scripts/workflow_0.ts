@@ -320,6 +320,64 @@ async function run() {
     // Logout - Match helloDashboard
     await page.getByTestId("left_nav_button").getByText("Home").click();
     await page.waitForTimeout(defaultTimeout);
+
+    //STRIPE PAYMENT TEST
+
+    //stripe payment
+    await page
+      .locator('iframe[title="Secure card payment input frame"]') // Updated locator
+      .contentFrame()
+      .getByRole("textbox", { name: "Credit or debit card number" })
+      .click();
+    await page.waitForTimeout(defaultTimeout);
+
+    await page
+      .locator('iframe[title="Secure card payment input frame"]') // Updated locator
+      .contentFrame()
+      .getByRole("textbox", { name: "Credit or debit card number" })
+      .fill("4242 4242 4242 4242");
+    await page.waitForTimeout(defaultTimeout);
+
+    await page
+      .locator('iframe[title="Secure card payment input frame"]') // Updated locator
+      .contentFrame()
+      .getByRole("textbox", { name: "Credit or debit card expiration date" })
+      .fill("04 / 27"); // Note: Expiration date format might need correction (e.g., MM / YY)
+    await page.waitForTimeout(defaultTimeout);
+
+    await page
+      .locator('iframe[title="Secure card payment input frame"]') // Updated locator
+      .contentFrame()
+      .getByRole("textbox", { name: "Credit or debit card CVC/CVV" })
+      .fill("245"); // Note: Expiration date format might need correction (e.g., MM / YY)
+    await page.waitForTimeout(defaultTimeout);
+
+    //Credit or debit card CVC/CVV
+
+    await page.waitForTimeout(5000);
+    console.log("1. Pausing execution after dialog handling...");
+
+    page.once("dialog", async (dialog) => {
+      // Make handler async
+      console.log(`Dialog message: ${dialog.message()}`);
+      await page.waitForTimeout(5000);
+      await dialog.accept(); // Change dismiss() to accept()
+      //console.log("Dialog accepted.");
+      //resolve(); // Resolve the promise when the dialog is handled
+    });
+
+    // This click likely triggers the dialog
+    await page
+      .getByRole("button", { name: "Make Payment (£1.99 for 30" })
+      .click();
+
+    await page.waitForTimeout(5000);
+
+    await page.getByTestId("left_nav_button").getByText("Home").click();
+    await page.waitForTimeout(5000);
+    //=================
+    //=================
+
     await page.getByRole("button", { name: "log out" }).click();
     await page.waitForTimeout(defaultTimeout);
     // Match helloDashboard (direct click)
