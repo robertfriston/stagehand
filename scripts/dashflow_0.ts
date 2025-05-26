@@ -31,7 +31,7 @@ async function run() {
 
   // --- Configuration ---
   const targetEnvironment = "LOCAL"; // Switch between 'LOCAL' and 'REMOTE'
-  const localUrl = "http://127.0.0.1:8080/admin/adminDashboard";
+  const localUrl = "http://127.0.0.1:8080/admin/adminDashboard?dashflow";
   const remoteUrl =
     process.env.REMOTE_URL ?? "https://jobenvy-v6-824.nodechef.com/login";
   const targetUrl = targetEnvironment === "LOCAL" ? localUrl : remoteUrl;
@@ -129,7 +129,12 @@ async function run() {
 
     await frame.getByTestId("done").getByTestId("iconIcon").click();
     await page.waitForTimeout(defaultTimeout);
-    await frame.getByText("MASTER RESUME").click();
+
+    //await page.pause();
+
+    //await frame.getByText("MASTER RESUME").click();
+    await frame.getByTestId("profile_0").click();
+
     await page.waitForTimeout(defaultTimeout);
     await frame.getByText("Back").click();
     await page.waitForTimeout(defaultTimeout);
