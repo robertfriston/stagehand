@@ -1,0 +1,300 @@
+.
+├── CHANGELOG.md
+├── dist
+│   ├── evals
+│   │   ├── args.d.ts
+│   │   ├── deterministic
+│   │   ├── env.d.ts
+│   │   ├── index.eval.d.ts
+│   │   ├── initStagehand.d.ts
+│   │   ├── llm_clients
+│   │   ├── logger.d.ts
+│   │   ├── scoring.d.ts
+│   │   ├── taskConfig.d.ts
+│   │   ├── tasks
+│   │   └── utils.d.ts
+│   ├── examples
+│   │   ├── 2048.d.ts
+│   │   ├── actionable_observe_example.d.ts
+│   │   ├── ai_sdk_example.d.ts
+│   │   ├── cua-example.d.ts
+│   │   ├── debugUrl.d.ts
+│   │   ├── example.d.ts
+│   │   ├── external_client.d.ts
+│   │   ├── external_clients
+│   │   ├── form_filling_sensible_cerebras.d.ts
+│   │   ├── form_filling_sensible_groq.d.ts
+│   │   ├── form_filling_sensible.d.ts
+│   │   ├── google_enter.d.ts
+│   │   ├── instructions.d.ts
+│   │   ├── langchain.d.ts
+│   │   ├── operator-example.d.ts
+│   │   ├── parameterizeApiKey.d.ts
+│   │   ├── popup.d.ts
+│   │   └── try_wordle.d.ts
+│   ├── index.d.ts
+│   ├── index.js
+│   ├── lib
+│   │   ├── a11y
+│   │   ├── agent
+│   │   ├── api.d.ts
+│   │   ├── cache
+│   │   ├── cache.d.ts
+│   │   ├── dom
+│   │   ├── handlers
+│   │   ├── index.d.ts
+│   │   ├── inference.d.ts
+│   │   ├── inferenceLogUtils.d.ts
+│   │   ├── llm
+│   │   ├── logger.d.ts
+│   │   ├── prompt.d.ts
+│   │   ├── StagehandContext.d.ts
+│   │   ├── StagehandPage.d.ts
+│   │   └── utils.d.ts
+│   ├── stagehand.config.d.ts
+│   └── types
+│       ├── act.d.ts
+│       ├── agent.d.ts
+│       ├── api.d.ts
+│       ├── browser.d.ts
+│       ├── context.d.ts
+│       ├── evals.d.ts
+│       ├── inference.d.ts
+│       ├── llm.d.ts
+│       ├── log.d.ts
+│       ├── model.d.ts
+│       ├── operator.d.ts
+│       ├── page.d.ts
+│       ├── playwright.d.ts
+│       ├── stagehand.d.ts
+│       ├── stagehandApiErrors.d.ts
+│       ├── stagehandErrors.d.ts
+│       └── textannotation.d.ts
+├── docs
+│   ├── logging.md
+│   ├── media
+│   │   ├── chunks.png
+│   │   └── stagehand-playwright.png
+│   └── release.md
+├── downloads
+├── eslint.config.mjs
+├── evals
+│   ├── args.ts
+│   ├── assets
+│   │   ├── cart.html
+│   │   └── peeler.html
+│   ├── deterministic
+│   │   ├── auxiliary
+│   │   ├── bb.playwright.config.ts
+│   │   ├── e2e.playwright.config.ts
+│   │   ├── local.playwright.config.ts
+│   │   ├── stagehand.config.ts
+│   │   └── tests
+│   ├── env.ts
+│   ├── evals.config.json
+│   ├── index.eval.ts
+│   ├── initStagehand.ts
+│   ├── llm_clients
+│   │   ├── hn_aisdk.ts
+│   │   ├── hn_customOpenAI.ts
+│   │   └── hn_langchain.ts
+│   ├── logger.ts
+│   ├── scoring.ts
+│   ├── taskConfig.ts
+│   ├── tasks
+│   │   ├── allrecipes.ts
+│   │   ├── amazon_add_to_cart.ts
+│   │   ├── apple.ts
+│   │   ├── arxiv.ts
+│   │   ├── bidnet.ts
+│   │   ├── combination_sauce.ts
+│   │   ├── costar.ts
+│   │   ├── expect_act_timeout.ts
+│   │   ├── expedia_search.ts
+│   │   ├── expedia.ts
+│   │   ├── extract_aigrant_companies.ts
+│   │   ├── extract_aigrant_targeted_2.ts
+│   │   ├── extract_aigrant_targeted.ts
+│   │   ├── extract_apartments.ts
+│   │   ├── extract_area_codes.ts
+│   │   ├── extract_baptist_health.ts
+│   │   ├── extract_capacitor_info.ts
+│   │   ├── extract_collaborators.ts
+│   │   ├── extract_csa.ts
+│   │   ├── extract_geniusee_2.ts
+│   │   ├── extract_geniusee.ts
+│   │   ├── extract_github_commits.ts
+│   │   ├── extract_github_stars.ts
+│   │   ├── extract_hamilton_weather.ts
+│   │   ├── extract_jfk_links.ts
+│   │   ├── extract_jstor_news.ts
+│   │   ├── extract_memorial_healthcare.ts
+│   │   ├── extract_nhl_stats.ts
+│   │   ├── extract_partners.ts
+│   │   ├── extract_press_releases.ts
+│   │   ├── extract_professional_info.ts
+│   │   ├── extract_public_notices.ts
+│   │   ├── extract_recipe.ts
+│   │   ├── extract_regulations_table.ts
+│   │   ├── extract_repo_name.ts
+│   │   ├── extract_resistor_info.ts
+│   │   ├── extract_rockauto.ts
+│   │   ├── extract_single_link.ts
+│   │   ├── extract_snowshoeing_destinations.ts
+│   │   ├── extract_staff_members.ts
+│   │   ├── extract_zillow.ts
+│   │   ├── google_flights.ts
+│   │   ├── google_jobs.ts
+│   │   ├── history.ts
+│   │   ├── homedepot.ts
+│   │   ├── imdb_movie_details.ts
+│   │   ├── instructions.ts
+│   │   ├── ionwave_observe.ts
+│   │   ├── ionwave.ts
+│   │   ├── nextChunk.ts
+│   │   ├── nonsense_action.ts
+│   │   ├── observe_amazon_add_to_cart.ts
+│   │   ├── observe_github.ts
+│   │   ├── observe_iframes1.ts
+│   │   ├── observe_iframes2.ts
+│   │   ├── observe_simple_google_search.ts
+│   │   ├── observe_taxes.ts
+│   │   ├── observe_vantechjournal.ts
+│   │   ├── observe_yc_startup.ts
+│   │   ├── panamcs.ts
+│   │   ├── peeler_complex.ts
+│   │   ├── peeler_simple.ts
+│   │   ├── prevChunk.ts
+│   │   ├── rakuten_jp.ts
+│   │   ├── sciquest.ts
+│   │   ├── scroll_50.ts
+│   │   ├── scroll_75.ts
+│   │   ├── simple_google_search.ts
+│   │   ├── stock_x.ts
+│   │   ├── ted_talk.ts
+│   │   ├── vanta_h.ts
+│   │   ├── vantechjournal.ts
+│   │   ├── wichita.ts
+│   │   └── wikipedia.ts
+│   └── utils.ts
+├── examples
+│   ├── 2048.ts
+│   ├── actionable_observe_example.ts
+│   ├── ai_sdk_example.ts
+│   ├── cua-example.ts
+│   ├── debugUrl.ts
+│   ├── example.ts
+│   ├── external_client.ts
+│   ├── external_clients
+│   │   ├── aisdk.ts
+│   │   ├── customOpenAI.ts
+│   │   └── langchain.ts
+│   ├── form_filling_sensible_cerebras.ts
+│   ├── form_filling_sensible_groq.ts
+│   ├── form_filling_sensible.ts
+│   ├── google_enter.ts
+│   ├── instructions.ts
+│   ├── langchain.ts
+│   ├── operator-example.ts
+│   ├── parameterizeApiKey.ts
+│   ├── popup.ts
+│   └── try_wordle.ts
+├── lib
+│   ├── a11y
+│   │   └── utils.ts
+│   ├── agent
+│   │   ├── AgentClient.ts
+│   │   ├── AgentProvider.ts
+│   │   ├── AnthropicCUAClient.ts
+│   │   ├── OpenAICUAClient.ts
+│   │   └── StagehandAgent.ts
+│   ├── api.ts
+│   ├── cache
+│   │   ├── ActionCache.ts
+│   │   ├── BaseCache.ts
+│   │   └── LLMCache.ts
+│   ├── cache.ts
+│   ├── dom
+│   │   ├── build
+│   │   ├── candidateCollector.ts
+│   │   ├── containerFactory.ts
+│   │   ├── DomChunk.ts
+│   │   ├── elementCheckUtils.ts
+│   │   ├── ElementContainer.ts
+│   │   ├── genDomScripts.ts
+│   │   ├── global.d.ts
+│   │   ├── GlobalPageContainer.ts
+│   │   ├── index.ts
+│   │   ├── process.ts
+│   │   ├── StagehandContainer.ts
+│   │   ├── utils.ts
+│   │   └── xpathUtils.ts
+│   ├── handlers
+│   │   ├── actHandler.ts
+│   │   ├── agentHandler.ts
+│   │   ├── extractHandler.ts
+│   │   ├── handlerUtils
+│   │   ├── observeHandler.ts
+│   │   └── operatorHandler.ts
+│   ├── index.ts
+│   ├── inference.ts
+│   ├── inferenceLogUtils.ts
+│   ├── llm
+│   │   ├── AnthropicClient.ts
+│   │   ├── CerebrasClient.ts
+│   │   ├── GoogleClient.ts
+│   │   ├── GroqClient.ts
+│   │   ├── LLMClient.ts
+│   │   ├── LLMProvider.ts
+│   │   └── OpenAIClient.ts
+│   ├── logger.ts
+│   ├── prompt.ts
+│   ├── StagehandContext.ts
+│   ├── StagehandPage.ts
+│   └── utils.ts
+├── LICENSE
+├── media
+│   ├── create-browser-app.gif
+│   └── github_demo.gif
+├── package-lock.json
+├── package.json
+├── project-structure.txt
+├── README.md
+├── scripts
+│   ├── helloDashboard.ts
+│   ├── jobenvy_1.ts
+│   ├── parallel_dashboard_test.ts
+│   ├── parallel_test.ts
+│   ├── single_test.ts
+│   ├── start_parallel_tests.ts
+│   ├── start.ts
+│   ├── test-stripe.ts
+│   ├── test.ts
+│   ├── workflow_0.ts
+│   ├── workflow_1.ts
+│   ├── workflow_2.ts
+│   ├── workflow_3.ts
+│   └── workflow_4.ts
+├── stagehand.config.ts
+├── tmp
+├── tsconfig.json
+└── types
+    ├── act.ts
+    ├── agent.ts
+    ├── api.ts
+    ├── browser.ts
+    ├── context.ts
+    ├── evals.ts
+    ├── inference.ts
+    ├── llm.ts
+    ├── log.ts
+    ├── model.ts
+    ├── operator.ts
+    ├── page.ts
+    ├── playwright.ts
+    ├── stagehand.ts
+    ├── stagehandApiErrors.ts
+    ├── stagehandErrors.ts
+    └── textannotation.ts
+
+41 directories, 257 files
