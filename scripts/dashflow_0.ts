@@ -132,8 +132,8 @@ async function run() {
 
     //await page.pause();
 
-    //await frame.getByText("MASTER RESUME").click();
-    await frame.getByTestId("profile_0").click();
+    await frame.getByText("MASTER RESUME").click();
+    //await frame.getByTestId("profile_0").click();
 
     await page.waitForTimeout(defaultTimeout);
     await frame.getByText("Back").click();
