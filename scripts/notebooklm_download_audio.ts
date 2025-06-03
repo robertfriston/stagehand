@@ -31,10 +31,10 @@ async function run() {
 
   console.log("✅ Attached to NotebookLM tab");
 
-  // Step 1: Click Studio tab using raw evaluate
-  const clicked = await page.evaluate(() => {
-    const elements = Array.from(document.querySelectorAll("div"));
-    const studio = elements.find((el) => el.textContent?.trim() === "Studio");
+  // Step 1: Click Studio tab
+  const clickedStudio = await page.evaluate(() => {
+    const divs = Array.from(document.querySelectorAll("div"));
+    const studio = divs.find((el) => el.textContent?.trim() === "Studio");
     if (studio instanceof HTMLElement) {
       studio.click();
       return true;
@@ -42,15 +42,44 @@ async function run() {
     return false;
   });
 
-  if (!clicked) {
-    console.error("❌ Studio tab not found via text match.");
+  if (!clickedStudio) {
+    console.error("❌ Could not find Studio tab");
     return;
   }
 
   console.log("🎬 Clicked Studio tab");
-  await page.waitForTimeout(3000);
+  await new Promise((r) => setTimeout(r, 2000));
 
-  // Step 2: Click 3-dot menu (More actions)
+  // Step 2: Click Generate button
+  const clickedGenerate = await page.evaluate(() => {
+    const spans = Array.from(document.querySelectorAll("button span"));
+    const generate = spans.find((el) => el.textContent?.trim() === "Generate");
+    if (generate && generate.parentElement instanceof HTMLElement) {
+      generate.parentElement.click();
+      return true;
+    }
+    return false;
+  });
+
+  if (!clickedGenerate) {
+    console.error("❌ Generate button not found");
+    return;
+  }
+
+  console.log("⚙️ Clicked Generate — waiting for it to complete...");
+
+  // Step 3: Wait for loading bar to disappear (progress bar = role="progressbar")
+  await page.waitForFunction(
+    () => {
+      const progress = document.querySelector('[role="progressbar"]');
+      return !progress;
+    },
+    { timeout: 60000 },
+  );
+
+  console.log("✅ Audio generation complete");
+
+  // Step 4: Click three-dot menu
   const menuButton = await page.$('button[aria-label="More actions"]');
   if (!menuButton) {
     console.error("❌ Menu button not found");
@@ -58,9 +87,9 @@ async function run() {
   }
 
   await menuButton.click();
-  await page.waitForTimeout(1000);
+  await new Promise((r) => setTimeout(r, 1000));
 
-  // Step 3: Click "Download audio"
+  // Step 5: Click "Download audio"
   const downloadClicked = await page.evaluate(() => {
     const items = Array.from(document.querySelectorAll("span"));
     const target = items.find((el) =>
@@ -80,7 +109,7 @@ async function run() {
 
   console.log("📥 Clicked Download audio");
 
-  // Step 4: Wait for MP3 download
+  // Step 6: Wait for MP3 download
   const downloadsDir = path.join(os.homedir(), "Downloads");
   const timeout = 20000;
   const pollInterval = 1000;
@@ -105,7 +134,7 @@ async function run() {
     return;
   }
 
-  // Step 5: Move file
+  // Step 7: Move file
   const srcPath = path.join(downloadsDir, mp3File);
   const destDir = path.resolve("./output");
   const destPath = path.join(destDir, "notebooklm_podcast.mp3");
