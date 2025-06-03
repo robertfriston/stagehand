@@ -9,7 +9,7 @@ async function run() {
   const browser = await puppeteer.connect({
     browserURL: "http://127.0.0.1:9222",
     defaultViewport: null,
-    protocolTimeout: 900000, // 15 min
+    protocolTimeout: 900000,
   });
 
   const pages = await browser.pages();
@@ -26,7 +26,6 @@ async function run() {
 
   console.log("✅ Attached to NotebookLM tab");
 
-  // Step 1: Click Studio tab
   const clickedStudio = await page.evaluate(() => {
     const divs = Array.from(document.querySelectorAll("div"));
     const studio = divs.find((el) => el.textContent?.trim() === "Studio");
@@ -38,7 +37,6 @@ async function run() {
   console.log("🎬 Clicked Studio tab");
   await new Promise((r) => setTimeout(r, 2000));
 
-  // Step 2: Click Generate
   const clickedGenerate = await page.evaluate(() => {
     const spans = Array.from(document.querySelectorAll("button span"));
     const generate = spans.find((el) => el.textContent?.trim() === "Generate");
@@ -52,11 +50,9 @@ async function run() {
   if (!clickedGenerate) return console.error("❌ Generate button not found");
   console.log("⚙️ Clicked Generate — waiting up to 15 minutes...");
 
-  // Step 3: Wait for Play button to appear
   await page.waitForSelector('button[aria-label^="Play"]', { timeout: 900000 });
   console.log("✅ Audio generation complete — player is visible");
 
-  // Step 4: Click the correct 3-dot audio menu using innerHTML match
   const allButtons = await page.$$("button");
   let menuButton = null;
 
@@ -77,7 +73,6 @@ async function run() {
   await new Promise((r) => setTimeout(r, 1000));
   console.log("✅ Opened 3-dot menu");
 
-  // Step 5: Click "Download"
   const clickedDownload = await page.evaluate(() => {
     const spans = Array.from(document.querySelectorAll("span"));
     const target = spans.find((el) => el.textContent?.trim() === "Download");
@@ -91,7 +86,6 @@ async function run() {
   if (!clickedDownload) return console.error("❌ Download option not found");
   console.log("📥 Downloading MP3...");
 
-  // Step 6: Wait for MP3
   const downloadsDir = path.join(os.homedir(), "Downloads");
   const timeout = 30000;
   const pollInterval = 1000;
@@ -121,7 +115,7 @@ async function run() {
   fs.renameSync(srcPath, destPath);
   console.log(`✅ MP3 saved to: ${destPath}`);
 
-  // Step 7: Click menu again and delete
+  // Step 7: Open 3-dot menu again and click Delete
   await menuButton.click();
   await new Promise((r) => setTimeout(r, 500));
 
@@ -136,7 +130,24 @@ async function run() {
   });
 
   if (!clickedDelete) return console.error("❌ Delete option not found");
-  console.log("🗑️ Audio clip deleted");
+  console.log("🗑️ Delete menu clicked");
+
+  // Step 8: Confirm the deletion in modal
+  await page
+    .waitForSelector('button span:text("Delete")', { timeout: 10000 })
+    .catch(() => null);
+  const clickedConfirm = await page.evaluate(() => {
+    const spans = Array.from(document.querySelectorAll("button span"));
+    const confirm = spans.find((el) => el.textContent?.trim() === "Delete");
+    if (confirm?.parentElement instanceof HTMLElement) {
+      confirm.parentElement.click();
+      return true;
+    }
+    return false;
+  });
+
+  if (!clickedConfirm) return console.error("❌ Could not confirm Delete");
+  console.log("✅ Audio clip deleted");
 
   await browser.disconnect();
 }
