@@ -259,7 +259,7 @@ async function run() {
     //================
     //PHASE TWO
     console.log("Workflow 0: Starting Phase Two");
-    await page.goto("http://localhost:3000/dashboard/jobseeker/");
+    //await page.goto("http://localhost:3000/dashboard/jobseeker/");
     await page.waitForTimeout(defaultTimeout);
 
     await page
