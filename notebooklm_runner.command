@@ -1,29 +1,30 @@
 #!/bin/bash
 
-# Define paths
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 PROJECT_DIR="$HOME/Documents/UTOPIA/stagehand"
-SCRIPT_PATH="$PROJECT_DIR/scripts/notebooklm_to_podcast.ts"
-NPX="/Users/jobenvy/.nvm/versions/node/v20.15.0/bin/npx"
+SCRIPT="$PROJECT_DIR/scripts/notebooklm_download_audio.ts"
+NOTEBOOK_URL="https://notebooklm.google.com/notebook/7a13e605-3c56-4a9c-aa15-61f2d661abf2"
 
-# Launch Chrome with remote debugging if not already running
+echo "🔁 Launching Chrome..."
 pgrep -f "Chrome.*9222" > /dev/null || \
-"$CHROME" --remote-debugging-port=9222 \
---user-data-dir="/tmp/stagehand-chrome-session" \
---no-proxy-server &
+"$CHROME" --remote-debugging-port=9222 --user-data-dir="/tmp/stagehand-chrome-session" --no-proxy-server &
 
-# Wait for Chrome
-sleep 5
+echo "🌐 Opening Notebook..."
+sleep 3
+osascript <<EOF
+tell application "Google Chrome"
+	if not (exists window 1) then make new window
+	tell window 1
+		make new tab with properties {URL:"$NOTEBOOK_URL"}
+	end tell
+	activate
+end tell
+EOF
 
-# Run script
+echo "⏳ Waiting for login..."
+sleep 10
+
+echo "🚀 Running audio download script..."
 cd "$PROJECT_DIR"
-export PATH="/Users/jobenvy/.nvm/versions/node/v20.15.0/bin:$PATH"
-"$NPX" tsx "$SCRIPT_PATH"
-
-# Convert to MP3
-say -v Samantha -o output/notebooklm_podcast.aiff -f output/notebooklm_podcast_script.txt
-afconvert -f m4af -d aac -b 192000 output/notebooklm_podcast.aiff output/notebooklm_podcast.mp3
-
-# Notify via voice + alert
-say "Podcast ready."
-osascript -e 'display notification "Podcast MP3 generated." with title "JobEnvy"'
+export PATH="$HOME/.nvm/versions/node/v20.15.0/bin:$PATH"
+npx tsx "$SCRIPT"
