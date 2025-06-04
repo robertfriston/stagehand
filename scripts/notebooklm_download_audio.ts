@@ -26,45 +26,56 @@ async function run() {
 
   console.log("✅ Attached to NotebookLM tab");
 
-  // Try clicking Generate first
-  let clickedGenerate = await page.evaluate(() => {
-    const spans = Array.from(document.querySelectorAll("button span"));
-    const generate = spans.find((el) => el.textContent?.trim() === "Generate");
-    if (generate?.parentElement instanceof HTMLElement) {
-      generate.parentElement.click();
+  // Step 1: Click Customize button (match style of other button clicks)
+  const clickedCustomize = await page.evaluate(() => {
+    const btns = Array.from(document.querySelectorAll("button"));
+    // Find visible Customize button
+    const customize = btns.find(
+      (el) =>
+        el.textContent?.trim() === "Customize" && el.offsetParent !== null,
+    );
+    if (customize instanceof HTMLElement) {
+      customize.click();
       return true;
     }
     return false;
   });
+  if (!clickedCustomize) return console.error("❌ Customize button not found");
+  console.log("🛠️ Clicked Customize");
+  await page.waitForSelector('textarea, [role="textbox"]', { timeout: 10000 });
 
-  if (!clickedGenerate) {
-    // If not found, try clicking Studio tab, then try Generate again
-    const clickedStudio = await page.evaluate(() => {
-      const divs = Array.from(document.querySelectorAll("div"));
-      const studio = divs.find((el) => el.textContent?.trim() === "Studio");
-      if (studio instanceof HTMLElement) studio.click();
-      return !!studio;
-    });
-
-    if (!clickedStudio) return console.error("❌ Studio tab not found");
-    console.log("🎬 Clicked Studio tab");
-    await new Promise((r) => setTimeout(r, 2000));
-
-    clickedGenerate = await page.evaluate(() => {
-      const spans = Array.from(document.querySelectorAll("button span"));
-      const generate = spans.find(
-        (el) => el.textContent?.trim() === "Generate",
-      );
-      if (generate?.parentElement instanceof HTMLElement) {
-        generate.parentElement.click();
-        return true;
-      }
-      return false;
-    });
+  // Step 2: Type prompt in modal
+  const promptText =
+    "YOU ARE JIMJAM AND DENNY THE AI HOSTS OF THE ANTISOCIAL PODCAST - BUILD ON THE LAST INFORMATION YOU HAVE BEEN GIVEN IN THE SCOURCE DOCUMENTS TO CREATE AN ENGAING PODCAST EPISODE";
+  // Try textarea first, then [role="textbox"]
+  let inputSelector = "textarea";
+  let inputBox = await page.$(inputSelector);
+  if (!inputBox) {
+    inputSelector = '[role="textbox"]';
+    inputBox = await page.$(inputSelector);
   }
+  if (!inputBox)
+    return console.error("❌ Could not find prompt input in modal");
+  await inputBox.click({ clickCount: 3 });
+  await inputBox.type(promptText, { delay: 10 });
+  console.log("✍️ Prompt entered");
 
-  if (!clickedGenerate) return console.error("❌ Generate button not found");
-  console.log("⚙️ Clicked Generate — waiting up to 15 minutes...");
+  // Step 3: Click Generate in modal
+  const clickedModalGenerate = await page.evaluate(() => {
+    const btns = Array.from(document.querySelectorAll("button"));
+    // Find visible Generate button in modal
+    const generate = btns.find(
+      (el) => el.textContent?.trim() === "Generate" && el.offsetParent !== null,
+    );
+    if (generate instanceof HTMLElement) {
+      generate.click();
+      return true;
+    }
+    return false;
+  });
+  if (!clickedModalGenerate)
+    return console.error("❌ Generate button in modal not found");
+  console.log("⚙️ Clicked Generate in modal — waiting up to 15 minutes...");
 
   await page.waitForSelector('button[aria-label^="Play"]', {
     timeout: 15 * 60 * 1000,
