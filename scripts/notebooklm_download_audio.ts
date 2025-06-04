@@ -62,19 +62,44 @@ async function run() {
 
   // Step 3: Click Generate in modal
   const clickedModalGenerate = await page.evaluate(() => {
-    const btns = Array.from(document.querySelectorAll("button"));
-    // Find visible Generate button in modal
-    const generate = btns.find(
-      (el) => el.textContent?.trim() === "Generate" && el.offsetParent !== null,
+    const modalDialog = document.querySelector(
+      ".mat-mdc-dialog-container, .cdk-overlay-pane",
     );
-    if (generate instanceof HTMLElement) {
-      generate.click();
-      return true;
+    if (!modalDialog) {
+      console.error("Modal dialog not found");
+      return false;
+    }
+
+    const buttons = Array.from(modalDialog.querySelectorAll("button"));
+    for (const btn of buttons) {
+      const span = btn.querySelector("span"); // Most Material buttons have text in a span
+      const buttonText = (span?.textContent || btn.textContent || "").trim();
+
+      if (buttonText === "Generate" && btn.offsetParent !== null) {
+        // Check if visible
+        (btn as HTMLElement).click();
+        return true;
+      }
+    }
+    // Fallback if no span or direct text match, try buttons with 'generate' in class or text
+    for (const btn of buttons) {
+      const buttonText = (btn.textContent || "").toLowerCase();
+      const classList = (btn.className || "").toLowerCase();
+      if (
+        (buttonText.includes("generate") || classList.includes("generate")) &&
+        btn.offsetParent !== null
+      ) {
+        (btn as HTMLElement).click();
+        console.log("Clicked modal generate button via fallback");
+        return true;
+      }
     }
     return false;
   });
-  if (!clickedModalGenerate)
+
+  if (!clickedModalGenerate) {
     return console.error("❌ Generate button in modal not found");
+  }
   console.log("⚙️ Clicked Generate in modal — waiting up to 15 minutes...");
 
   await page.waitForSelector('button[aria-label^="Play"]', {
