@@ -26,7 +26,6 @@ async function run() {
 
   console.log("✅ Attached to NotebookLM tab");
 
-
   // Try clicking Generate first
   let clickedGenerate = await page.evaluate(() => {
     const spans = Array.from(document.querySelectorAll("button span"));
@@ -53,7 +52,9 @@ async function run() {
 
     clickedGenerate = await page.evaluate(() => {
       const spans = Array.from(document.querySelectorAll("button span"));
-      const generate = spans.find((el) => el.textContent?.trim() === "Generate");
+      const generate = spans.find(
+        (el) => el.textContent?.trim() === "Generate",
+      );
       if (generate?.parentElement instanceof HTMLElement) {
         generate.parentElement.click();
         return true;
@@ -65,7 +66,9 @@ async function run() {
   if (!clickedGenerate) return console.error("❌ Generate button not found");
   console.log("⚙️ Clicked Generate — waiting up to 15 minutes...");
 
-  await page.waitForSelector('button[aria-label^="Play"]', { timeout: 900000 });
+  await page.waitForSelector('button[aria-label^="Play"]', {
+    timeout: 15 * 60 * 1000,
+  }); // 15 minutes
   console.log("✅ Audio generation complete — player is visible");
 
   const allButtons = await page.$$("button");
@@ -102,36 +105,62 @@ async function run() {
   console.log("📥 Downloading MP3...");
 
   const downloadsDir = path.join(os.homedir(), "Downloads");
-  const timeout = 30000;
+  const timeout = 15 * 60 * 1000; // 15 minutes
   const pollInterval = 1000;
-  const mp3Pattern = /^.*\.mp3$/;
+  const audioPattern = /^.*\.(mp3|wav)$/;
+
+  // Record files before download
+  const beforeFiles = new Set(fs.readdirSync(downloadsDir));
 
   let elapsed = 0;
-  let mp3File = "";
+  let audioFile = "";
 
   while (elapsed < timeout) {
     const files = fs.readdirSync(downloadsDir);
-    const match = files.find((f) => mp3Pattern.test(f));
-    if (match) {
-      mp3File = match;
+    console.log("[DEBUG] Files in Downloads:", files);
+    // Only consider new files
+    const newFiles = files.filter(
+      (f) => !beforeFiles.has(f) && audioPattern.test(f),
+    );
+    if (newFiles.length > 0) {
+      audioFile = newFiles[0];
       break;
     }
     await new Promise((res) => setTimeout(res, pollInterval));
     elapsed += pollInterval;
   }
 
-  if (!mp3File) return console.error("❌ MP3 not downloaded in time");
+  if (!audioFile) return console.error("❌ Audio file not downloaded in time");
 
-  const srcPath = path.join(downloadsDir, mp3File);
+  const srcPath = path.join(downloadsDir, audioFile);
   const destDir = path.resolve("./output");
-  const destPath = path.join(destDir, "notebooklm_podcast.mp3");
+
+  // Preserve extension and add timestamp
+  const ext = path.extname(audioFile);
+  const timestamp = new Date()
+    .toISOString()
+    .replace(/[-:T.]/g, "")
+    .slice(0, 14); // YYYYMMDDHHMMSS
+  const destPath = path.join(destDir, `notebooklm_podcast_${timestamp}${ext}`);
 
   if (!fs.existsSync(destDir)) fs.mkdirSync(destDir);
   fs.renameSync(srcPath, destPath);
-  console.log(`✅ MP3 saved to: ${destPath}`);
+  console.log(`✅ Audio saved to: ${destPath}`);
 
-  // Step 7: Open 3-dot menu again and click Delete
-  await menuButton.click();
+  // Step 7: Re-open 3-dot menu and click Delete
+  // Find the 3-dot menu button again (in case DOM changed)
+  let menuButton2 = null;
+  const allButtons2 = await page.$$("button");
+  for (const btn of allButtons2) {
+    const html = await btn.evaluate((el) => el.innerHTML);
+    if (html.includes("more_vert")) {
+      menuButton2 = btn;
+      break;
+    }
+  }
+  if (!menuButton2)
+    return console.error("❌ Could not find 3-dot audio menu for delete");
+  await menuButton2.click();
   await new Promise((r) => setTimeout(r, 500));
 
   const clickedDelete = await page.evaluate(() => {
