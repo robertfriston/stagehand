@@ -4,9 +4,10 @@ import path from "path";
 import os from "os";
 
 async function run() {
-  // Get prompt and length from command line arguments
+  // Get prompt, length, and destination directory from command line arguments
   const promptText = process.argv[2];
   const audioLength = process.argv[3] || "Default"; // Default to "Default" if not provided
+  const destDirArg = process.argv[4];
 
   if (!promptText) {
     console.error(
@@ -271,7 +272,10 @@ async function run() {
   if (!audioFile) return console.error("❌ Audio file not downloaded in time");
 
   const srcPath = path.join(downloadsDir, audioFile);
-  const destDir = path.resolve("./output");
+  // Use provided destination directory or fallback to ./output
+  const destDir = destDirArg
+    ? path.resolve(destDirArg)
+    : path.resolve("./output");
 
   // Preserve extension and add timestamp
   const ext = path.extname(audioFile);
