@@ -315,19 +315,18 @@ async function run() {
   console.log("🗑️ Clicked Delete option");
 
   // Wait for the audio player to disappear as confirmation of deletion
-  await page
-    .waitForFunction(
+  try {
+    await page.waitForFunction(
       () => !document.querySelector('button[aria-label^="Play"]'),
-      { timeout: 10000 },
-    )
-    .catch((): null => {
-      // Explicitly type the arrow function's return
-      console.warn(
-        "⚠️ Audio player did not disappear after delete, or timeout reached.",
-      );
-      return null;
-    });
-  console.log("✅ Audio player disappeared, deletion confirmed.");
+      { timeout: 15000 }, // Increased timeout slightly to 15 seconds
+    );
+    console.log("✅ Audio player disappeared, deletion confirmed.");
+  } catch (e) {
+    console.error("❌ Error: Audio player did not disappear after clicking Delete, or timeout reached. Deletion may have failed.");
+    // console.error(e); // Optionally log the full error
+    await browser.disconnect();
+    process.exit(1); // Exit with error code to stop the master script
+  }
 
   await browser.disconnect();
   console.log("🎉 Script finished successfully!");
