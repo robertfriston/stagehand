@@ -4,8 +4,10 @@ import path from "path";
 import os from "os";
 
 async function run() {
-  // Get prompt from command line arguments
+  // Get prompt and length from command line arguments
   const promptText = process.argv[2];
+  const audioLength = process.argv[3] || "Default"; // Default to "Default" if not provided
+
   if (!promptText) {
     console.error(
       "❌ Error: No prompt provided. Please pass the prompt as a command-line argument.",
@@ -13,6 +15,7 @@ async function run() {
     process.exit(1);
   }
   console.log(`ℹ️ Using prompt: "${promptText}"`);
+  console.log(`📏 Using audio length: "${audioLength}"`);
 
   console.log("🎙️ Connecting to Chrome...");
 
@@ -52,66 +55,155 @@ async function run() {
   });
   if (!clickedCustomize) return console.error("❌ Customize button not found");
   console.log("🛠️ Clicked Customize");
-  await page.waitForSelector('textarea, [role="textbox"]', { timeout: 10000 });
 
-  // Step 2: Type prompt in modal
-  // const promptText = // This line is now replaced by the argument from process.argv[2]
-  //   "YOU ARE JIMJAM AND DENNY THE AI HOSTS OF THE ANTISOCIAL PODCAST - BUILD ON THE LAST INFORMATION YOU HAVE BEEN GIVEN IN THE SCOURCE DOCUMENTS TO CREATE AN ENGAING PODCAST EPISODE";
-  // Try textarea first, then [role="textbox"]
-  let inputSelector = "textarea";
-  let inputBox = await page.$(inputSelector);
-  if (!inputBox) {
-    inputSelector = '[role="textbox"]';
-    inputBox = await page.$(inputSelector);
+  console.log("⏱️ Waiting 2 seconds for modal to open and settle...");
+  await new Promise((r) => setTimeout(r, 2000));
+  console.log(
+    "✅ Modal should be open. Proceeding with actions in order: Prompt -> Length -> Generate.",
+  );
+
+  // Step 1 (New Order): Type prompt in modal
+  console.log(
+    "Attempting to type prompt (assuming modal textarea has focus)...",
+  );
+  try {
+    // Try direct keyboard typing first, assuming focus is in the right place
+    await page.keyboard.type(promptText, { delay: 10 });
+    console.log("✍️ Prompt typed using page.keyboard.type.");
+  } catch (e) {
+    console.error(
+      `❌ Error typing prompt using page.keyboard.type: ${e instanceof Error ? e.message : String(e)}`,
+    );
+    // Fallback: find a textarea in any dialog and type into it
+    console.log(
+      "Attempting fallback: finding and typing into modal textarea...",
+    );
+    try {
+      const inputBox = await page.$(
+        'div[role="dialog"] textarea, div[role="dialog"] [role="textbox"]',
+      );
+      if (!inputBox)
+        throw new Error("Textarea/textbox not found in dialog for fallback.");
+      await inputBox.click({ clickCount: 3 }); // Clear existing content
+      await inputBox.type(promptText, { delay: 10 });
+      console.log("✍️ Prompt typed using fallback (found textarea).");
+    } catch (fallbackError) {
+      console.error(
+        `❌ Error in fallback prompt typing: ${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`,
+      );
+      return; // Critical failure if prompt cannot be entered
+    }
   }
-  if (!inputBox)
-    return console.error("❌ Could not find prompt input in modal");
-  await inputBox.click({ clickCount: 3 });
-  await inputBox.type(promptText, { delay: 10 });
-  console.log("✍️ Prompt entered");
+  await new Promise((r) => setTimeout(r, 500)); // Short delay after typing prompt
 
-  // Step 3: Click Generate in modal
-  const clickedModalGenerate = await page.evaluate(() => {
-    const modalDialog = document.querySelector(
+  // Step 2 (New Order): Select audio length in modal
+  console.log(`Attempting to click "${audioLength}" length button.`);
+  const clickedLengthButton = await page.evaluate((length) => {
+    let modalDialog = document.querySelector(
       ".mat-mdc-dialog-container, .cdk-overlay-pane",
     );
     if (!modalDialog) {
-      console.error("Modal dialog not found");
+      console.warn(
+        "Specific modal selectors (.mat-mdc-dialog-container, .cdk-overlay-pane) not found for length, trying generic div[role='dialog']",
+      );
+      modalDialog = document.querySelector('div[role="dialog"]');
+    }
+    if (!modalDialog) {
+      console.error(
+        "No modal dialog found for length selection (tried specific and generic).",
+      );
       return false;
     }
-
-    const buttons = Array.from(modalDialog.querySelectorAll("button"));
-    for (const btn of buttons) {
-      const span = btn.querySelector("span"); // Most Material buttons have text in a span
-      const buttonText = (span?.textContent || btn.textContent || "").trim();
-
-      if (buttonText === "Generate" && btn.offsetParent !== null) {
-        // Check if visible
-        (btn as HTMLElement).click();
-        return true;
-      }
+    const lengthButtons = Array.from(modalDialog.querySelectorAll("button"));
+    const targetButton = lengthButtons.find(
+      (btn) =>
+        btn.textContent?.trim() === length &&
+        (btn as HTMLElement).offsetParent !== null,
+    );
+    if (targetButton instanceof HTMLElement) {
+      targetButton.click();
+      return true;
     }
-    // Fallback if no span or direct text match, try buttons with 'generate' in class or text
-    for (const btn of buttons) {
-      const buttonText = (btn.textContent || "").toLowerCase();
-      const classList = (btn.className || "").toLowerCase();
-      if (
-        (buttonText.includes("generate") || classList.includes("generate")) &&
-        btn.offsetParent !== null
-      ) {
-        (btn as HTMLElement).click();
-        console.log("Clicked modal generate button via fallback");
-        return true;
-      }
-    }
+    console.error(
+      `Length button "${length}" not found or not visible in the active modal. Available buttons:`,
+    );
+    lengthButtons.forEach((btn) =>
+      console.log(`- "${btn.textContent?.trim()}"`),
+    );
     return false;
-  });
+  }, audioLength);
 
-  if (!clickedModalGenerate) {
-    return console.error("❌ Generate button in modal not found");
+  if (!clickedLengthButton) {
+    console.error(
+      `❌ Could not click the "${audioLength}" button in the modal.`,
+    );
+    console.warn(
+      "Proceeding despite length button click failure (will use default or current length).",
+    );
+  } else {
+    console.log(`👍 Clicked "${audioLength}" length button.`);
   }
-  console.log("⚙️ Clicked Generate in modal — waiting up to 15 minutes...");
+  await new Promise((r) => setTimeout(r, 500)); // Short delay after clicking length
 
+  // Step 3 (New Order): Click Generate in modal
+  console.log("Attempting to click Generate button in modal...");
+  try {
+    const clickedModalGenerate = await page.evaluate(() => {
+      let modalDialog = document.querySelector(
+        ".mat-mdc-dialog-container, .cdk-overlay-pane",
+      );
+      if (!modalDialog) {
+        console.warn(
+          "Specific modal selectors (.mat-mdc-dialog-container, .cdk-overlay-pane) not found for Generate, trying generic div[role='dialog']",
+        );
+        modalDialog = document.querySelector('div[role="dialog"]');
+      }
+      if (!modalDialog) {
+        console.error(
+          "No modal dialog found for clicking Generate button (tried specific and generic).",
+        );
+        return false;
+      }
+      const buttons = Array.from(modalDialog.querySelectorAll("button"));
+      // This logic was more robust for the Generate button previously
+      for (const btn of buttons) {
+        const span = btn.querySelector("span"); // Most Material buttons have text in a span
+        const buttonText = (span?.textContent || btn.textContent || "").trim();
+
+        if (
+          buttonText === "Generate" &&
+          (btn as HTMLElement).offsetParent !== null
+        ) {
+          // Check if visible
+          (btn as HTMLElement).click();
+          return true;
+        }
+      }
+      console.error(
+        "Generate button not found or not visible in the active modal (checked span and direct text). Available buttons:",
+      );
+      buttons.forEach((btn) =>
+        console.log(
+          `- "${(btn.querySelector("span")?.textContent || btn.textContent || "").trim()}"`,
+        ),
+      );
+      return false;
+    });
+
+    if (!clickedModalGenerate) {
+      throw new Error(
+        "Failed to click Generate button in modal using combined logic.",
+      );
+    }
+    console.log("⚙️ Clicked Generate in modal — waiting up to 15 minutes...");
+  } catch (e) {
+    console.error(
+      `❌ Error clicking Generate in modal: ${e instanceof Error ? e.message : String(e)}`,
+    );
+    return; // Critical failure
+  }
+
+  // Wait for audio generation (player to appear)
   await page.waitForSelector('button[aria-label^="Play"]', {
     timeout: 15 * 60 * 1000,
   }); // 15 minutes
@@ -220,26 +312,28 @@ async function run() {
   });
 
   if (!clickedDelete) return console.error("❌ Delete option not found");
-  console.log("🗑️ Delete menu clicked");
+  console.log("🗑️ Clicked Delete option");
 
-  // Step 8: Confirm the deletion in modal
+  // Wait for the audio player to disappear as confirmation of deletion
   await page
-    .waitForSelector('button span:text("Delete")', { timeout: 10000 })
-    .catch(() => null);
-  const clickedConfirm = await page.evaluate(() => {
-    const spans = Array.from(document.querySelectorAll("button span"));
-    const confirm = spans.find((el) => el.textContent?.trim() === "Delete");
-    if (confirm?.parentElement instanceof HTMLElement) {
-      confirm.parentElement.click();
-      return true;
-    }
-    return false;
-  });
-
-  if (!clickedConfirm) return console.error("❌ Could not confirm Delete");
-  console.log("✅ Audio clip deleted");
+    .waitForFunction(
+      () => !document.querySelector('button[aria-label^="Play"]'),
+      { timeout: 10000 },
+    )
+    .catch((): null => {
+      // Explicitly type the arrow function's return
+      console.warn(
+        "⚠️ Audio player did not disappear after delete, or timeout reached.",
+      );
+      return null;
+    });
+  console.log("✅ Audio player disappeared, deletion confirmed.");
 
   await browser.disconnect();
+  console.log("🎉 Script finished successfully!");
 }
 
-run().catch(console.error);
+run().catch((error) => {
+  console.error("❌ An error occurred:", error);
+  process.exit(1);
+});
