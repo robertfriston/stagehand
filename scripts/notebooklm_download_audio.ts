@@ -312,7 +312,55 @@ async function run() {
   });
 
   if (!clickedDelete) return console.error("❌ Delete option not found");
-  console.log("🗑️ Clicked Delete option");
+  console.log("🗑️ Clicked Delete option from menu");
+
+  // Wait for the confirmation dialog to appear and click the final Delete button
+  await new Promise((r) => setTimeout(r, 1000)); // Wait for dialog
+
+  console.log("Attempting to click confirmation Delete button in dialog...");
+  const clickedConfirmDelete = await page.evaluate(() => {
+    const dialogs = Array.from(document.querySelectorAll('div[role="dialog"], .mat-mdc-dialog-container, .cdk-overlay-pane'));
+    let confirmButton = null;
+
+    for (const dialog of dialogs) {
+      const buttons = Array.from(dialog.querySelectorAll("button"));
+      // Often, confirmation buttons are styled differently or might be the primary action
+      // We'll look for a button with the exact text "Delete"
+      confirmButton = buttons.find(
+        (btn) => {
+          const buttonText = (btn.textContent || "").trim();
+          // Check for exact match "Delete", common for confirmation
+          return buttonText === "Delete" && (btn as HTMLElement).offsetParent !== null;
+        }
+      );
+      if (confirmButton) break;
+    }
+
+    if (confirmButton instanceof HTMLElement) {
+      confirmButton.click();
+      return true;
+    }
+    console.error("Confirmation Delete button not found in any active dialog. Dialogs checked:", dialogs.length);
+    // Log available buttons in the last checked/found dialog for debugging
+    if (dialogs.length > 0) {
+      const lastDialog = dialogs[dialogs.length - 1];
+      const buttonsInLastDialog = Array.from(lastDialog.querySelectorAll("button"));
+      console.log("Buttons in last checked/found dialog:");
+      buttonsInLastDialog.forEach(btn => console.log(`- "${(btn.textContent || "").trim()}"`));
+    }
+    return false;
+  });
+
+  if (!clickedConfirmDelete) {
+    console.error("❌ Failed to click the confirmation Delete button in the dialog.");
+    // If we can't confirm delete, it's a critical failure for this step.
+    // Consider if process.exit(1) is appropriate here if master script relies on full cleanup.
+    // For now, let it proceed to the player check, which will likely fail.
+    // No, let's make it a hard fail because the goal is to delete.
+    await browser.disconnect();
+    process.exit(1); 
+  }
+  console.log("✅ Clicked confirmation Delete button in dialog.");
 
   // Wait for the audio player to disappear as confirmation of deletion
   try {

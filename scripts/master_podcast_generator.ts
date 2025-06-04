@@ -15,11 +15,11 @@ const prompts = [
   },
   {
     text: "YOU ARE JIMJAM AND DENNY THE AI HOSTS OF THE ANTISOCIAL PODCAST - EPISODE 2: TALK ABOUT [LOVE ENVY] AND THE CHALLENGES OF MODERN RELATIONSHIPS.",
-    length: "Longer",
+    length: "Shorter",
   },
   {
     text: "YOU ARE JIMJAM AND DENNY THE AI HOSTS OF THE ANTISOCIAL PODCAST - EPISODE 3: TALK ABOUT [VIBE ENVY] AND THE GLOBAL WHATS ON GUIDE.",
-    length: "Default",
+    length: "Shorter",
   },
 ];
 
