@@ -4,6 +4,16 @@ import path from "path";
 import os from "os";
 
 async function run() {
+  // Get prompt from command line arguments
+  const promptText = process.argv[2];
+  if (!promptText) {
+    console.error(
+      "❌ Error: No prompt provided. Please pass the prompt as a command-line argument.",
+    );
+    process.exit(1);
+  }
+  console.log(`ℹ️ Using prompt: "${promptText}"`);
+
   console.log("🎙️ Connecting to Chrome...");
 
   const browser = await puppeteer.connect({
@@ -45,8 +55,8 @@ async function run() {
   await page.waitForSelector('textarea, [role="textbox"]', { timeout: 10000 });
 
   // Step 2: Type prompt in modal
-  const promptText =
-    "YOU ARE JIMJAM AND DENNY THE AI HOSTS OF THE ANTISOCIAL PODCAST - BUILD ON THE LAST INFORMATION YOU HAVE BEEN GIVEN IN THE SCOURCE DOCUMENTS TO CREATE AN ENGAING PODCAST EPISODE";
+  // const promptText = // This line is now replaced by the argument from process.argv[2]
+  //   "YOU ARE JIMJAM AND DENNY THE AI HOSTS OF THE ANTISOCIAL PODCAST - BUILD ON THE LAST INFORMATION YOU HAVE BEEN GIVEN IN THE SCOURCE DOCUMENTS TO CREATE AN ENGAING PODCAST EPISODE";
   // Try textarea first, then [role="textbox"]
   let inputSelector = "textarea";
   let inputBox = await page.$(inputSelector);
