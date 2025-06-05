@@ -3,7 +3,9 @@
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 PROJECT_DIR="$HOME/Documents/UTOPIA/stagehand"
 SCRIPT="$PROJECT_DIR/scripts/master_podcast_generator.ts"
-NOTEBOOK_URL="https://notebooklm.google.com/notebook/7a13e605-3c56-4a9c-aa15-61f2d661abf2"
+# NOTEBOOK_URL="https://notebooklm.google.com/notebook/7a13e605-3c56-4a9c-aa15-61f2d661abf2"
+NOTEBOOK_URL="https://notebooklm.google.com/notebook/fbd67eec-8675-4258-b760-009809308b7d"
+
 
 echo "🔁 Launching Chrome..."
 pgrep -f "Chrome.*9222" > /dev/null || \
