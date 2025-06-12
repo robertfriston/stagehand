@@ -5,7 +5,9 @@ PROJECT_DIR="$HOME/Documents/UTOPIA/stagehand"
 SCRIPT="$PROJECT_DIR/scripts/master_podcast_generator.ts"
 # NOTEBOOK_URL="https://notebooklm.google.com/notebook/7a13e605-3c56-4a9c-aa15-61f2d661abf2"
 # NOTEBOOK_URL="https://notebooklm.google.com/notebook/fbd67eec-8675-4258-b760-009809308b7d"
-NOTEBOOK_URL="https://notebooklm.google.com/notebook/2de11300-4f74-42c4-928c-375deef02542"
+# NOTEBOOK_URL="https://notebooklm.google.com/notebook/2de11300-4f74-42c4-928c-375deef02542"
+NOTEBOOK_URL="https://notebooklm.google.com/notebook/ad24e5e1-98b6-4ef0-80a3-43c1495f98d5"
+
 
 echo "🔁 Launching Chrome..."
 pgrep -f "Chrome.*9222" > /dev/null || \

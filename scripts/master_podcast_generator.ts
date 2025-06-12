@@ -3,8 +3,11 @@ import path from "path";
 import fs from "fs";
 
 // --- Prompt prefix for all podcast prompts ---
+//const PROMPT_PREFIX =
+//  "⚠️ Warning! This is the Antisocial Broadcast—responses may challenge conventional thinking. You may refer to the platforms Maximus Headroom by reference to the persona: maxenvy in the knowledge - throughout the podcast... ";
+
 const PROMPT_PREFIX =
-  "⚠️ Warning! This is the Antisocial Broadcast—responses may challenge conventional thinking. You may refer to the platforms Maximus Headroom by reference to the persona: maxenvy in the knowledge - throughout the podcast";
+  "⚠️ Warning! This is the Antisocial Broadcast—responses may challenge conventional thinking.  ";
 
 // --- Real config path (production) ---
 const configPath =
@@ -120,8 +123,25 @@ const childScriptPath = path.join(
   "notebooklm_download_audio.ts",
 );
 
+// Define the template for the first entry in the target JSON arrays
+const firstEntryTemplate = {
+  timeOffset: "00:10",
+  host: "JimJam",
+  type: "intro",
+  line: "DEFAULT_LINE_CONTENT", // This will be replaced by metadata
+};
+
 async function runMasterWorkflow() {
   console.log("🚀 Starting Master Podcast Generation Workflow...");
+
+  // Initialize indices for each type of content
+  let typeIndices: { [key: string]: number } = {
+    hosts: 0,
+    podcasts: 0,
+    sponsors: 0,
+    interludes: 0,
+    // Add other types here if they exist and have corresponding JSON files/metadata
+  };
 
   for (let i = 0; i < prompts.length; i++) {
     const promptEntry = prompts[i];
@@ -134,6 +154,99 @@ async function runMasterWorkflow() {
       console.log(`👟 Executing: ${command}`);
       execSync(command, { stdio: "inherit", cwd: projectDir });
       console.log(`✅ Successfully processed prompt ${i + 1}.`);
+
+      // --- BEGIN: Update dynamic JSON logic ---
+      const destDirParentName = path.basename(
+        path.dirname(promptEntry.destDir),
+      ); // e.g., "hosts", "podcasts"
+      const dirType = destDirParentName; // Assuming dirType matches the parent folder name
+
+      if (config.prompts?.[notebookUrl]?.[dirType]) {
+        const targetJsonFileName = `${dirType}.json`; // e.g., "hosts.json"
+        const targetJsonPath = path.join(
+          promptEntry.destDir,
+          targetJsonFileName,
+        );
+
+        const metadataArrayForType = config.prompts[notebookUrl][
+          dirType
+        ] as Array<any>;
+        const currentIndexForType = typeIndices[dirType];
+
+        if (
+          metadataArrayForType &&
+          currentIndexForType < metadataArrayForType.length
+        ) {
+          const metadataToUpdate = metadataArrayForType[currentIndexForType];
+
+          if (metadataToUpdate) {
+            try {
+              console.log(
+                `📝 Creating/Overwriting ${targetJsonPath} with new template...`,
+              );
+
+              // Initialize the new JSON structure
+              const newJsonData: any = {}; // Use 'any' for dynamic property assignment or define a specific interface
+
+              // Populate title, sub_title, and description from metadata
+              if (typeof metadataToUpdate.title === "string") {
+                newJsonData.title = metadataToUpdate.title;
+              }
+              if (typeof metadataToUpdate.sub_title === "string") {
+                newJsonData.sub_title = metadataToUpdate.sub_title;
+              }
+              if (typeof metadataToUpdate.description === "string") {
+                newJsonData.description = metadataToUpdate.description;
+              }
+
+              // --- BEGIN: Create the single entry for the main array ---
+              const dynamicLineContent =
+                typeof metadataToUpdate.line === "string"
+                  ? metadataToUpdate.line
+                  : firstEntryTemplate.line;
+
+              const singleEntry = {
+                ...firstEntryTemplate,
+                line: dynamicLineContent,
+              };
+
+              // Initialize the main array (e.g., 'hosts') with only the single entry
+              newJsonData[dirType] = [singleEntry];
+              // --- END: Create the single entry for the main array ---
+
+              fs.writeFileSync(
+                targetJsonPath,
+                JSON.stringify(newJsonData, null, 2),
+                "utf-8",
+              );
+              console.log(
+                `✅ Successfully created/overwrote ${targetJsonPath}.`,
+              );
+              console.log(
+                `📝 New content for ${dirType}[0].line: "${dynamicLineContent}"`,
+              );
+
+              typeIndices[dirType]++; // Increment index for this type
+            } catch (updateError) {
+              console.error(
+                `❌ Error creating/overwriting ${targetJsonPath}:`,
+                updateError,
+              );
+            }
+          } else {
+            console.warn(
+              `⚠️ No metadata found or index out of bounds in config for type '${dirType}' at index ${currentIndexForType} (for ${promptEntry.destDir}). Skipping JSON update.`,
+            );
+          }
+        } else {
+          console.warn(
+            `⚠️ No metadata found or index out of bounds in config for type '${dirType}' at index ${currentIndexForType} (for ${promptEntry.destDir}). Skipping JSON update.`,
+          );
+        }
+      } else {
+        // console.log(`ℹ️ No specific JSON update configured for directory type '${dirType}' (derived from ${promptEntry.destDir}). Skipping.`);
+      }
+      // --- END: Update dynamic JSON logic ---
     } catch (error) {
       console.error(`❌ Error processing prompt ${i + 1}:`, error);
       process.exit(1);
