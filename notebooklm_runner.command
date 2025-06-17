@@ -1,4 +1,3 @@
-DEBUG=true
 #!/bin/bash
 
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
@@ -30,17 +29,10 @@ EOF
 echo "⏳ Waiting for login..."
 sleep 10
 
-
-# If debugging, run the YouTube workflow script instead of the audio workflow
-if [ "$DEBUG" = true ]; then
-  echo "�️ Debug mode enabled. Running YouTube workflow script (notebooklm_add_youtube.ts) instead of audio workflow."
-  cd "$PROJECT_DIR"
-  export PATH="$HOME/.nvm/versions/node/v20.15.0/bin:$PATH"
-  npx tsx "$PROJECT_DIR/scripts/notebooklm_add_youtube.ts"
-  exit 0
-fi
-
-echo "🚀 Running audio download script..."
+# Always run YouTube workflow first
 cd "$PROJECT_DIR"
 export PATH="$HOME/.nvm/versions/node/v20.15.0/bin:$PATH"
+npx tsx "$PROJECT_DIR/scripts/notebooklm_add_youtube.ts"
+
+# Then run audio download script (original workflow)
 npx tsx "$SCRIPT"

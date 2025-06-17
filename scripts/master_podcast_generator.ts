@@ -39,38 +39,47 @@ if (notebookUrls.length === 0)
 const notebookUrl = notebookUrls[0];
 const questions = config.prompts[notebookUrl].questions;
 
+// --- Extract YouTube URL and Title from persona config if available ---
+const channels = config.prompts?.[notebookUrl]?.channels;
+const YOUTUBE_URL: string | null =
+  channels && channels[0]?.url ? channels[0].url : null;
+const YOUTUBE_TITLE: string | null =
+  channels && channels[0]?.title ? channels[0].title : null;
+console.log("YOUTUBE_URL", YOUTUBE_URL);
+console.log("YOUTUBE_TITLE", YOUTUBE_TITLE);
+
 // Template array with required metadata for each prompt
 const promptTemplates = [
   {
-    length: "Default",
+    length: "Shorter",
     destDir: "/Users/jobenvy/Documents/UTOPIA/media/hosts/1",
   },
   {
-    length: "Default",
+    length: "Shorter",
     destDir: "/Users/jobenvy/Documents/UTOPIA/media/hosts/2",
   },
   {
-    length: "Default",
+    length: "Shorter",
     destDir: "/Users/jobenvy/Documents/UTOPIA/media/hosts/3",
   },
   {
-    length: "Default",
+    length: "Shorter",
     destDir: "/Users/jobenvy/Documents/UTOPIA/media/hosts/4",
   },
   {
-    length: "Default",
+    length: "Shorter",
     destDir: "/Users/jobenvy/Documents/UTOPIA/media/podcasts/1",
   },
   {
-    length: "Default",
+    length: "Shorter",
     destDir: "/Users/jobenvy/Documents/UTOPIA/media/podcasts/2",
   },
   {
-    length: "Default",
+    length: "Shorter",
     destDir: "/Users/jobenvy/Documents/UTOPIA/media/podcasts/3",
   },
   {
-    length: "Default",
+    length: "Shorter",
     destDir: "/Users/jobenvy/Documents/UTOPIA/media/podcasts/4",
   },
   {
@@ -107,14 +116,18 @@ const promptTemplates = [
   },
 ];
 
-// Build prompts array by injecting persona question text
-const prompts = promptTemplates.map((tpl, idx) => ({
-  text: questions[idx]
-    ? `${PROMPT_PREFIX}YOU ARE ${config.persona.toUpperCase()} THE AI HOST OF THE ANTISOCIAL PODCAST - EPISODE 1: ${questions[idx]}`
-    : `${PROMPT_PREFIX}YOU ARE ${config.persona.toUpperCase()} THE AI HOST OF THE ANTISOCIAL PODCAST - EPISODE 1: [NO PROMPT AVAILABLE]`,
-  length: tpl.length,
-  destDir: tpl.destDir,
-}));
+// Build prompts array with YouTube prefix
+const prompts = promptTemplates.map((tpl, idx) => {
+  const question = questions[idx] || "[NO PROMPT AVAILABLE]";
+  const prefix = `use this ${YOUTUBE_URL || "[no url]"} with the title ${
+    YOUTUBE_TITLE || "[no title]"
+  } for your analysis... `;
+  return {
+    text: `${prefix}${PROMPT_PREFIX} YOU ARE ${config.persona.toUpperCase()} THE AI HOST OF THE ANTISOCIAL PODCAST - EPISODE 1: ${question}`,
+    length: tpl.length,
+    destDir: tpl.destDir,
+  };
+});
 
 const projectDir = path.resolve(__dirname, "..");
 const childScriptPath = path.join(
@@ -265,11 +278,81 @@ async function runMasterWorkflow() {
                   );
               }
 
+              // --- hosts.json update/append logic ---
+              let hostsJson: {
+                title: string | null;
+                sub_title: string | null;
+                description: string | null;
+                hosts: Array<any>;
+                files: Array<any>;
+              } = {
+                title: metadataToUpdate.title || null,
+                sub_title: metadataToUpdate.sub_title || null,
+                description: metadataToUpdate.description || null,
+                hosts: [
+                  {
+                    timeOffset: metadataToUpdate.timeOffset || "00:10",
+                    host: metadataToUpdate.host || "JimJam",
+                    type: metadataToUpdate.type || "intro",
+                    line: metadataToUpdate.line || "Default intro line.",
+                  },
+                ],
+                files: [],
+              };
+              if (fs.existsSync(targetJsonPath)) {
+                try {
+                  const existing = JSON.parse(
+                    fs.readFileSync(targetJsonPath, "utf-8"),
+                  );
+                  hostsJson = {
+                    ...hostsJson,
+                    ...existing,
+                    hosts: Array.isArray(existing.hosts)
+                      ? existing.hosts
+                      : hostsJson.hosts,
+                    files: Array.isArray(existing.files) ? existing.files : [],
+                  };
+                } catch {
+                  console.warn(
+                    `⚠️ Could not parse existing hosts.json, starting fresh.`,
+                  );
+                }
+              }
+              // Ensure all required file fields are present
+              const fileEntry: {
+                fileName: string | null;
+                url: string | null;
+                embedUrl: string | null;
+                type: string | null;
+                title: string | null;
+                heading: string | null;
+                description: string | null;
+                thumbnail: string | null;
+                author: string | null;
+                duration: number | null;
+                prompt: string | null;
+              } = {
+                fileName: downloadedFilePath || null,
+                url: YOUTUBE_URL,
+                embedUrl: null,
+                type: "youtube",
+                title: YOUTUBE_TITLE,
+                heading: null,
+                description: metadataToUpdate.description || null,
+                thumbnail: null,
+                author: null,
+                duration: 0,
+                prompt: promptEntry.text || null,
+              };
+              hostsJson.files.push(fileEntry);
               fs.writeFileSync(
                 targetJsonPath,
-                JSON.stringify(newJsonData, null, 2),
+                JSON.stringify(hostsJson, null, 2),
                 "utf-8",
               );
+              console.log(`✅ hosts.json updated at ${targetJsonPath}`);
+              // --- END hosts.json update/append logic ---
+
               console.log(
                 `✅ Successfully created/overwritten ${targetJsonPath}.`,
               );

@@ -3,7 +3,8 @@ import fs from "fs";
 import path from "path";
 
 // Use the same absolute config path as master_podcast_generator.ts
-const personaPath = "/Users/jobenvy/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.maxenvy.json";
+const personaPath =
+  "/Users/jobenvy/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.maxenvy.json";
 const persona = JSON.parse(fs.readFileSync(personaPath, "utf-8"));
 
 // Dynamically get the first NotebookLM URL, YouTube channel URL, and title from the persona
