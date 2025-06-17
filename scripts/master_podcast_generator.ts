@@ -131,16 +131,17 @@ const firstEntryTemplate = {
   line: "DEFAULT_LINE_CONTENT", // This will be replaced by metadata
 };
 
+const DUMMY_SUMMARY_TEXT =
+  'The provided transcript, from the "A Life After Layoff" YouTube channel, features Brian\'s analysis of several "cringy" job postings. His primary goal is to educate job seekers on identifying red flags from low-quality employers by dissecting poorly written or unreasonable job descriptions. Key themes include companies expecting "God-level talent" for low pay, unrealistic demands for work-life balance and "owner mentality" without proper compensation, and employers asking for extensive, time-consuming application materials like videos and essays. Brian emphasizes that reputable employers will pay for talent and time, and warns against opportunities that exploit applicants or demand excessive commitment without fair compensation.';
+
 async function runMasterWorkflow() {
   console.log("🚀 Starting Master Podcast Generation Workflow...");
 
-  // Initialize indices for each type of content
   let typeIndices: { [key: string]: number } = {
-    hosts: 0,
-    podcasts: 0,
+    hosts: 0, // We'll still use this to get the correct metadata for hosts
+    podcasts: 0, // Other types can remain for other potential logic, but JSON update is restricted
     sponsors: 0,
     interludes: 0,
-    // Add other types here if they exist and have corresponding JSON files/metadata
   };
 
   for (let i = 0; i < prompts.length; i++) {
@@ -149,29 +150,53 @@ async function runMasterWorkflow() {
       `\n🎧 Processing Prompt ${i + 1} of ${prompts.length}: "${promptEntry.text}"`,
     );
 
+    let downloadedFilePath: string | null = null;
+
     try {
       const command = `npx tsx "${childScriptPath}" "${promptEntry.text.replace(/"/g, '\\"')}" "${promptEntry.length}" "${promptEntry.destDir}"`;
       console.log(`👟 Executing: ${command}`);
-      execSync(command, { stdio: "inherit", cwd: projectDir });
+      const execOutput = execSync(command, {
+        cwd: projectDir,
+        encoding: "utf-8",
+      });
+      console.log("--- Child Script Output ---");
+      console.log(execOutput);
+      console.log("--- End Child Script Output ---");
+
+      const outputLines = execOutput.split("\n");
+      const pathLine = outputLines.find((line) =>
+        line.startsWith("FINAL_AUDIO_PATH:"),
+      );
+      if (pathLine) {
+        downloadedFilePath = pathLine
+          .substring("FINAL_AUDIO_PATH:".length)
+          .trim();
+        console.log(`ℹ️ Captured audio file path: ${downloadedFilePath}`);
+      } else {
+        console.warn(
+          "⚠️ Could not find FINAL_AUDIO_PATH in child script output.",
+        );
+      }
       console.log(`✅ Successfully processed prompt ${i + 1}.`);
 
-      // --- BEGIN: Update dynamic JSON logic ---
       const destDirParentName = path.basename(
         path.dirname(promptEntry.destDir),
-      ); // e.g., "hosts", "podcasts"
-      const dirType = destDirParentName; // Assuming dirType matches the parent folder name
+      );
+      const dirType = destDirParentName; // This will be "hosts", "podcasts", etc.
 
-      if (config.prompts?.[notebookUrl]?.[dirType]) {
-        const targetJsonFileName = `${dirType}.json`; // e.g., "hosts.json"
+      // --- MODIFICATION: Only proceed if dirType is "hosts" ---
+      if (dirType === "hosts") {
+        const targetJsonFileName = "hosts.json"; // Hardcode to "hosts.json"
+        // --- END MODIFICATION ---
         const targetJsonPath = path.join(
           promptEntry.destDir,
           targetJsonFileName,
         );
-
-        const metadataArrayForType = config.prompts[notebookUrl][
-          dirType
+        // Ensure we are trying to get metadata for "hosts" type from config
+        const metadataArrayForType = config.prompts?.[notebookUrl]?.[
+          "hosts"
         ] as Array<any>;
-        const currentIndexForType = typeIndices[dirType];
+        const currentIndexForType = typeIndices["hosts"]; // Use hosts index
 
         if (
           metadataArrayForType &&
@@ -184,35 +209,61 @@ async function runMasterWorkflow() {
               console.log(
                 `📝 Creating/Overwriting ${targetJsonPath} with new template...`,
               );
+              const newJsonData: { [key: string]: any } = {};
 
-              // Initialize the new JSON structure
-              const newJsonData: any = {}; // Use 'any' for dynamic property assignment or define a specific interface
-
-              // Populate title, sub_title, and description from metadata
-              if (typeof metadataToUpdate.title === "string") {
+              if (typeof metadataToUpdate.title === "string")
                 newJsonData.title = metadataToUpdate.title;
-              }
-              if (typeof metadataToUpdate.sub_title === "string") {
+              if (typeof metadataToUpdate.sub_title === "string")
                 newJsonData.sub_title = metadataToUpdate.sub_title;
-              }
-              if (typeof metadataToUpdate.description === "string") {
+              if (typeof metadataToUpdate.description === "string")
                 newJsonData.description = metadataToUpdate.description;
-              }
 
-              // --- BEGIN: Create the single entry for the main array ---
               const dynamicLineContent =
                 typeof metadataToUpdate.line === "string"
                   ? metadataToUpdate.line
                   : firstEntryTemplate.line;
-
               const singleEntry = {
                 ...firstEntryTemplate,
                 line: dynamicLineContent,
               };
+              // The key in newJsonData should still be "hosts" for hosts.json
+              newJsonData["hosts"] = [singleEntry];
 
-              // Initialize the main array (e.g., 'hosts') with only the single entry
-              newJsonData[dirType] = [singleEntry];
-              // --- END: Create the single entry for the main array ---
+              if (
+                downloadedFilePath &&
+                metadataToUpdate.file_template_metadata &&
+                typeof metadataToUpdate.file_template_metadata === "object"
+              ) {
+                const actualFileDuration = 0;
+                console.log(
+                  `ℹ️ Using dummy duration: ${actualFileDuration}. Implement actual duration logic if needed.`,
+                );
+                const summaryText =
+                  typeof metadataToUpdate.summary_text === "string"
+                    ? metadataToUpdate.summary_text
+                    : DUMMY_SUMMARY_TEXT;
+                const fileEntry = {
+                  fileName: downloadedFilePath,
+                  ...metadataToUpdate.file_template_metadata,
+                  prompt: promptEntry.text,
+                  duration: actualFileDuration,
+                  summary: summaryText,
+                };
+                newJsonData.files = [fileEntry];
+                console.log(
+                  `ℹ️ Added file metadata for: ${downloadedFilePath} including prompt, duration, and summary.`,
+                );
+              } else {
+                newJsonData.files = [];
+                if (!downloadedFilePath)
+                  console.warn(
+                    "⚠️ Downloaded file path not available for 'files' array.",
+                  );
+                if (!metadataToUpdate.file_template_metadata)
+                  console.warn(
+                    "⚠️ 'file_template_metadata' not found in config for 'files' array.",
+                  );
+              }
 
               fs.writeFileSync(
                 targetJsonPath,
@@ -220,39 +271,39 @@ async function runMasterWorkflow() {
                 "utf-8",
               );
               console.log(
-                `✅ Successfully created/overwrote ${targetJsonPath}.`,
+                `✅ Successfully created/overwritten ${targetJsonPath}.`,
               );
-              console.log(
-                `📝 New content for ${dirType}[0].line: "${dynamicLineContent}"`,
-              );
-
-              typeIndices[dirType]++; // Increment index for this type
+              typeIndices["hosts"]++; // Increment hosts index
             } catch (updateError) {
               console.error(
-                `❌ Error creating/overwriting ${targetJsonPath}:`,
+                `❌ Error creating/updating ${targetJsonPath}:`,
                 updateError,
               );
             }
           } else {
             console.warn(
-              `⚠️ No metadata found or index out of bounds in config for type '${dirType}' at index ${currentIndexForType} (for ${promptEntry.destDir}). Skipping JSON update.`,
+              `⚠️ No metadata object found in config for 'hosts' at index ${currentIndexForType}. Skipping JSON update.`,
             );
           }
         } else {
           console.warn(
-            `⚠️ No metadata found or index out of bounds in config for type '${dirType}' at index ${currentIndexForType} (for ${promptEntry.destDir}). Skipping JSON update.`,
+            `⚠️ Metadata array not found or index out of bounds for 'hosts' at index ${currentIndexForType}. Skipping JSON update.`,
           );
         }
       } else {
-        // console.log(`ℹ️ No specific JSON update configured for directory type '${dirType}' (derived from ${promptEntry.destDir}). Skipping.`);
+        console.log(
+          `ℹ️ Skipping JSON update for directory type '${dirType}' as it is not 'hosts'.`,
+        );
       }
-      // --- END: Update dynamic JSON logic ---
-    } catch (error) {
+    } catch (error: any) {
       console.error(`❌ Error processing prompt ${i + 1}:`, error);
+      if (error.stdout)
+        console.error("Child process stdout:\n", error.stdout.toString());
+      if (error.stderr)
+        console.error("Child process stderr:\n", error.stderr.toString());
       process.exit(1);
     }
   }
-
   console.log("\n🎉 Master Podcast Generation Workflow Completed!");
 }
 
