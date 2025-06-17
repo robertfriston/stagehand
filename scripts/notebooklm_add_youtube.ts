@@ -255,121 +255,156 @@ async function run() {
     await browser.disconnect();
     return;
   }
-  await input.click({ clickCount: 3 });
-  await input.type(YOUTUBE_URL, { delay: 10 });
-  console.log("✅ [Step 8] Pasted YouTube URL");
+  await input.focus(); // Ensure field is focused
+  await input.click({ clickCount: 3 }); // Select existing content
+  await page.keyboard.press("Backspace"); // Clear existing content explicitly
+  await input.type(YOUTUBE_URL, { delay: 50 }); // Slightly increased delay for typing
+
+  // Verify the input field's value
+  const pastedValue = await page.evaluate(
+    (el) => (el as HTMLInputElement).value,
+    input,
+  );
+  console.log(
+    `✅ [Step 8] Pasted YouTube URL. Value in field: "${pastedValue}"`,
+  );
+
+  if (pastedValue !== YOUTUBE_URL) {
+    console.warn(
+      `⚠️ [Step 8] Typed value "${pastedValue}" does not match expected "${YOUTUBE_URL}". Retrying type.`,
+    );
+    await input.click({ clickCount: 3 });
+    await page.keyboard.press("Backspace");
+    await input.type(YOUTUBE_URL, { delay: 100 }); // Slower typing on retry
+    const pastedValueRetry = await page.evaluate(
+      (el) => (el as HTMLInputElement).value,
+      input,
+    );
+    console.log(
+      `✅ [Step 8] Retried pasting. Value in field: "${pastedValueRetry}"`,
+    );
+    if (pastedValueRetry !== YOUTUBE_URL) {
+      console.error(
+        `❌ [Step 8] Failed to set input field value correctly even after retry. Current value: "${pastedValueRetry}"`,
+      );
+      await browser.disconnect();
+      return;
+    }
+  }
+
+  console.log(
+    "⏳ [Step 8.5] Waiting 3 seconds after pasting URL and verifying content...",
+  );
+  await new Promise((r) => setTimeout(r, 3000));
+  console.log("⏩ [Step 8.5] Done waiting 3 seconds");
 
   // Step 9: Click [Insert] button
-  console.log("🔍 [Step 9] Looking for [Insert] button...");
-  const insertButtonHandle = await page.evaluateHandle(() => {
-    const buttons = Array.from(document.querySelectorAll("button"));
-    return (
-      buttons.find(
-        (btn) => btn.textContent && btn.textContent.includes("Insert"),
-      ) || null
-    );
-  });
-  if (!insertButtonHandle) {
-    console.error("❌ [Insert] button not found");
-    await browser.disconnect();
-    return;
-  }
-  const insertButtonElem =
-    insertButtonHandle.asElement() as import("puppeteer-core").ElementHandle<Element>;
+  console.log(
+    "🔍 [Step 9] Looking for [Insert] button using robust strategy...",
+  );
   let insertButtonSuccess = false;
-  if (insertButtonElem) {
-    await insertButtonElem.click();
-    await insertButtonHandle.dispose();
-    console.log("✅ [Step 9] Clicked [Insert] button");
+
+  const insertModalSelector =
+    "div[role='dialog'], .mat-mdc-dialog-container, .cdk-overlay-pane";
+  const insertEvaluationResult = await page.evaluate(
+    (modalDialogSelector, targetButtonText) => {
+      const modal = document.querySelector(modalDialogSelector);
+      const searchContext: ParentNode = modal || document; // Changed let to const
+      if (!modal) {
+        // console.warn("Insert button modal not found, searching document.");
+      }
+
+      const buttonsAndSimilar = Array.from(
+        searchContext.querySelectorAll(
+          'button, div[role="button"], input[type="button"], input[type="submit"]',
+        ),
+      );
+
+      for (const el of buttonsAndSimilar) {
+        const htmlEl = el as HTMLElement;
+        // Visibility check for the main element 'el'
+        if (
+          htmlEl.offsetParent === null ||
+          htmlEl.hidden ||
+          htmlEl.style.display === "none" ||
+          htmlEl.style.visibility === "hidden"
+        ) {
+          continue;
+        }
+
+        // Strategy 1: Look for a child span with class 'mdc-button__label' and check its text
+        const labelSpan = htmlEl.querySelector("span.mdc-button__label");
+        if (labelSpan) {
+          const labelTextContent = (labelSpan.textContent || "").trim(); // Trim for consistent comparison
+          if (
+            labelTextContent
+              .toLowerCase()
+              .includes(targetButtonText.toLowerCase())
+          ) {
+            htmlEl.click();
+            return {
+              success: true,
+              message: `Clicked button via child span.mdc-button__label containing "${targetButtonText}" (found: "${labelTextContent}")`,
+            };
+          }
+        }
+
+        // Strategy 2: Fallback to checking the main element's text properties
+        const textContent = (htmlEl.textContent || "").trim();
+        const innerTextVal = (htmlEl.innerText || "").trim();
+        const ariaLabel = (htmlEl.getAttribute("aria-label") || "").trim();
+        const value = ((htmlEl as HTMLInputElement).value || "").trim();
+
+        const textsToSearch = [
+          textContent,
+          innerTextVal,
+          ariaLabel,
+          value,
+        ].filter((s) => s && s.length > 0);
+
+        for (const text of textsToSearch) {
+          if (text.toLowerCase().includes(targetButtonText.toLowerCase())) {
+            htmlEl.click();
+            return {
+              success: true,
+              message: `Clicked button via its own text/attribute containing "${targetButtonText}" (found: "${text}")`,
+            };
+          }
+        }
+      }
+      return {
+        success: false,
+        message: `No visible button or specific label span containing "${targetButtonText}" found`,
+      }; // Updated message
+    },
+    insertModalSelector,
+    "Insert",
+  );
+
+  if (insertEvaluationResult.success) {
+    console.log(
+      `✅ [Step 9] Clicked [Insert] button. ${insertEvaluationResult.message}`,
+    );
     await new Promise((r) => setTimeout(r, 3000)); // 3 second delay
     insertButtonSuccess = true;
   } else {
-    console.error("❌ [Insert] button handle is not an element");
-    await browser.disconnect();
-    return;
-  }
-
-  if (!insertButtonSuccess) {
-    console.log(
-      'Initial attempt to click "Insert" failed. Trying alternative strategy using page.evaluate...',
+    console.error(
+      `❌ [Step 9] Failed to click [Insert] button. ${insertEvaluationResult.message}`,
     );
-
-    const modalSelector =
-      "div[role='dialog'], .mat-mdc-dialog-container, .cdk-overlay-pane"; // Define modalSelector here
-    const evaluationResult = await page.evaluate(
-      (modalDialogSelector, targetButtonText) => {
-        const modal = document.querySelector(modalDialogSelector);
-        if (!modal) {
-          return {
-            success: false,
-            message: `Modal not found with selector: ${modalDialogSelector}`,
-          };
-        }
-        const buttons = Array.from(
-          modal.querySelectorAll(
-            'button, div[role="button"], input[type="button"], input[type="submit"]',
-          ),
-        );
-
-        for (const btn of buttons) {
-          const el = btn as HTMLElement;
-          // Basic visibility check: element must be part of the offset hierarchy
-          if (
-            el.offsetParent === null ||
-            el.hidden ||
-            el.style.display === "none" ||
-            el.style.visibility === "hidden"
-          ) {
-            continue;
-          }
-
-          const textContent = (el.textContent || "").trim();
-          const innerTextVal = (el.innerText || "").trim(); // innerText considers CSS visibility to some extent
-          const ariaLabel = (el.getAttribute("aria-label") || "").trim();
-          const value = ((el as HTMLInputElement).value || "").trim();
-
-          const textsToSearch = [
-            textContent,
-            innerTextVal,
-            ariaLabel,
-            value,
-          ].filter((s) => s && s.length > 0);
-
-          for (const text of textsToSearch) {
-            if (text.toLowerCase().includes(targetButtonText.toLowerCase())) {
-              el.click();
-              return {
-                success: true,
-                message: `Clicked button with text/label containing "${targetButtonText}" (found: "${text}")`,
-              };
-            }
-          }
-        }
-        return {
-          success: false,
-          message: `No visible button containing "${targetButtonText}" found in modal ${modalDialogSelector}`,
-        };
-      },
-      modalSelector,
-      "Insert",
+    // Log visible buttons in the modal if the robust strategy fails
+    const modalExistsForDebug = await page.evaluate(
+      (sel) => !!document.querySelector(sel),
+      insertModalSelector,
     );
-
-    if (evaluationResult.success) {
+    if (modalExistsForDebug) {
       console.log(
-        `Successfully clicked the "Insert" button using alternative strategy: ${evaluationResult.message}`,
+        "Modal detected for Insert button debug logging. Logging visible buttons within it...",
       );
-      insertButtonSuccess = true;
+      await printVisibleButtons(page, insertModalSelector);
     } else {
-      console.error(
-        `Failed to click the "Insert" button using alternative strategy. ${evaluationResult.message}`,
-      );
-      // Log visible buttons again if the evaluate strategy also fails, as it might provide new clues
-      await printVisibleButtons(page, modalSelector);
+      console.log("No modal detected for Insert button debug logging.");
     }
-  } else {
-    console.log(
-      'Successfully clicked the "Insert" button on the first attempt (using clickButtonByTextOrIcon).',
-    );
+    // No need for the old fallback logic as we've made the primary attempt robust.
   }
 
   if (insertButtonSuccess) {
