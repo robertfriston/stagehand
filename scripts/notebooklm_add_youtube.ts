@@ -70,33 +70,57 @@ async function run() {
   );
   console.log("✅ [Step 5] Modal appeared");
 
-  // Step 6: Click [YouTube] button in modal
-  console.log("🔍 [Step 6] Looking for [YouTube] button in modal...");
-  const youtubeButtonHandle = await page.evaluateHandle(() => {
-    const buttons = Array.from(document.querySelectorAll("button"));
-    return (
-      buttons.find(
-        (btn) => btn.textContent && btn.textContent.includes("YouTube"),
-      ) || null
+  // Wait a bit longer after modal appears
+  await new Promise((r) => setTimeout(r, 2000));
+
+  // Get all button texts in the modal and log them in Node.js
+  const modalButtonTexts = await page.evaluate(() => {
+    let modalDialog = document.querySelector(
+      ".mat-mdc-dialog-container, .cdk-overlay-pane",
     );
+    if (!modalDialog) {
+      modalDialog = document.querySelector('div[role="dialog"]');
+    }
+    if (modalDialog) {
+      const buttons = Array.from(modalDialog.querySelectorAll("button"));
+      return buttons.map((btn, i) => `[${i}] "${btn.textContent?.trim()}"`);
+    }
+    return ["No modal dialog found for button logging."];
   });
-  if (!youtubeButtonHandle) {
-    console.error("❌ [YouTube] button not found in modal");
+  console.log("Modal buttons:", modalButtonTexts);
+
+  // Find and log all visible buttons with their text
+  const allButtonTexts = await page.evaluate(() => {
+    const buttons = Array.from(document.querySelectorAll("button"));
+    return buttons
+      .filter((btn) => btn.offsetParent !== null)
+      .map((btn, i) => `[${i}] "${btn.textContent?.trim()}"`);
+  });
+  console.log("All visible buttons:", allButtonTexts);
+
+  // Step 6: Click [YouTube] icon button in document
+  console.log("🔍 [Step 6] Looking for [YouTube] icon button in document...");
+  const clickedYouTube = await page.evaluate(() => {
+    const buttons = Array.from(document.querySelectorAll("button"));
+    const ytBtn = buttons.find(
+      (btn) =>
+        btn.offsetParent !== null &&
+        btn.textContent &&
+        btn.textContent.includes("video_youtube"),
+    );
+    if (ytBtn instanceof HTMLElement) {
+      ytBtn.click();
+      return true;
+    }
+    return false;
+  });
+  if (!clickedYouTube) {
+    console.error("❌ [YouTube] icon button not found in document");
     await browser.disconnect();
     return;
   }
-  const youtubeButtonElem =
-    youtubeButtonHandle.asElement() as import("puppeteer-core").ElementHandle<Element>;
-  if (youtubeButtonElem) {
-    await youtubeButtonElem.click();
-    await youtubeButtonHandle.dispose();
-    console.log("✅ [Step 6] Clicked [YouTube] button");
-    await new Promise((r) => setTimeout(r, 3000)); // 3 second delay
-  } else {
-    console.error("❌ [YouTube] button handle is not an element");
-    await browser.disconnect();
-    return;
-  }
+  console.log("✅ [Step 6] Clicked [YouTube] icon button");
+  await new Promise((r) => setTimeout(r, 3000)); // 3 second delay
 
   // Wait for YouTube URL input to appear
   console.log("⏳ [Step 7] Waiting for YouTube URL input to appear...");
