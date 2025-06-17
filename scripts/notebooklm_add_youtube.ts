@@ -2,7 +2,7 @@ import puppeteer from "puppeteer-core";
 
 async function run() {
   const YOUTUBE_URL = "https://youtu.be/ns2Jxcy4Zbo?si=q6Ym-GFi_qpOEAYo";
-  const WAIT_FOR_LOGIN_MS = 60000; // 1 minute
+  const WAIT_FOR_LOGIN_MS = 10000; // 1 minute
 
   console.log("⏳ [Step 1] Waiting for Google login...");
   await new Promise((r) => setTimeout(r, WAIT_FOR_LOGIN_MS));
@@ -49,8 +49,18 @@ async function run() {
     await browser.disconnect();
     return;
   }
-  await (addButtonHandle as any).click();
-  console.log("✅ [Step 4] Clicked [+ Add] button");
+  const addButtonElem =
+    addButtonHandle.asElement() as import("puppeteer-core").ElementHandle<Element>;
+  if (addButtonElem) {
+    await addButtonElem.click();
+    await addButtonHandle.dispose();
+    console.log("✅ [Step 4] Clicked [+ Add] button");
+    await new Promise((r) => setTimeout(r, 3000)); // 3 second delay
+  } else {
+    console.error("❌ [+ Add] button handle is not an element");
+    await browser.disconnect();
+    return;
+  }
 
   // Wait for modal to appear
   console.log("⏳ [Step 5] Waiting for modal to appear...");
@@ -75,8 +85,18 @@ async function run() {
     await browser.disconnect();
     return;
   }
-  await (youtubeButtonHandle as any).click();
-  console.log("✅ [Step 6] Clicked [YouTube] button");
+  const youtubeButtonElem =
+    youtubeButtonHandle.asElement() as import("puppeteer-core").ElementHandle<Element>;
+  if (youtubeButtonElem) {
+    await youtubeButtonElem.click();
+    await youtubeButtonHandle.dispose();
+    console.log("✅ [Step 6] Clicked [YouTube] button");
+    await new Promise((r) => setTimeout(r, 3000)); // 3 second delay
+  } else {
+    console.error("❌ [YouTube] button handle is not an element");
+    await browser.disconnect();
+    return;
+  }
 
   // Wait for YouTube URL input to appear
   console.log("⏳ [Step 7] Waiting for YouTube URL input to appear...");
@@ -110,8 +130,18 @@ async function run() {
     await browser.disconnect();
     return;
   }
-  await (insertButtonHandle as any).click();
-  console.log("✅ [Step 9] Clicked [Insert] button");
+  const insertButtonElem =
+    insertButtonHandle.asElement() as import("puppeteer-core").ElementHandle<Element>;
+  if (insertButtonElem) {
+    await insertButtonElem.click();
+    await insertButtonHandle.dispose();
+    console.log("✅ [Step 9] Clicked [Insert] button");
+    await new Promise((r) => setTimeout(r, 3000)); // 3 second delay
+  } else {
+    console.error("❌ [Insert] button handle is not an element");
+    await browser.disconnect();
+    return;
+  }
 
   // Optional: Wait for the modal to close or for the new source to appear
   console.log(
