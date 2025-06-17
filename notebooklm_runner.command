@@ -1,17 +1,18 @@
+DEBUG=true
 #!/bin/bash
 
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 PROJECT_DIR="$HOME/Documents/UTOPIA/stagehand"
 SCRIPT="$PROJECT_DIR/scripts/master_podcast_generator.ts"
-# NOTEBOOK_URL="https://notebooklm.google.com/notebook/7a13e605-3c56-4a9c-aa15-61f2d661abf2"
-# NOTEBOOK_URL="https://notebooklm.google.com/notebook/fbd67eec-8675-4258-b760-009809308b7d"
-# NOTEBOOK_URL="https://notebooklm.google.com/notebook/2de11300-4f74-42c4-928c-375deef02542"
-NOTEBOOK_URL="https://notebooklm.google.com/notebook/ad24e5e1-98b6-4ef0-80a3-43c1495f98d5"
+
+# Dynamically extract the first NotebookLM URL from the persona config
+PERSONA_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.maxenvy.json"
+NOTEBOOK_URL=$(node -e "console.log(Object.keys(require('$PERSONA_JSON').prompts)[0])")
 
 
 echo "🔁 Launching Chrome..."
 pgrep -f "Chrome.*9222" > /dev/null || \
-"$CHROME" --remote-debugging-port=9222 --user-data-dir="/tmp/stagehand-chrome-session" --no-proxy-server &
+"$CHROME" --remote-debugging-port=9222 --user-data-dir="/tmp/stagehand-chrome-session" --no-proxy-server --start-maximized &
 
 echo "🌐 Opening Notebook..."
 sleep 3
@@ -19,6 +20,7 @@ osascript <<EOF
 tell application "Google Chrome"
 	if not (exists window 1) then make new window
 	tell window 1
+		set URL of active tab to "http://127.0.0.1:8080/admin/adminDashboard"
 		make new tab with properties {URL:"$NOTEBOOK_URL"}
 	end tell
 	activate
@@ -27,6 +29,12 @@ EOF
 
 echo "⏳ Waiting for login..."
 sleep 10
+
+# If debugging, stop here
+if [ "$DEBUG" = true ]; then
+  echo "🛑 Debug mode enabled. Halting script before running audio download."
+  exit 0
+fi
 
 echo "🚀 Running audio download script..."
 cd "$PROJECT_DIR"
