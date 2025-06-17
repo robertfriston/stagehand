@@ -244,14 +244,62 @@ async function run() {
 
   // Wait for YouTube URL input to appear
   console.log("⏳ [Step 7] Waiting for YouTube URL input to appear...");
-  await page.waitForSelector("input[type='text'], input", { timeout: 10000 });
-  console.log("✅ [Step 7] YouTube URL input appeared");
+  let youtubeUrlInputSelector = 'input[formcontrolname="newUrl"]'; // More specific selector, now 'let'
+  try {
+    await page.waitForSelector(youtubeUrlInputSelector, {
+      timeout: 10000,
+      visible: true,
+    });
+    console.log(
+      "✅ [Step 7] YouTube URL input appeared using selector:",
+      youtubeUrlInputSelector,
+    );
+  } catch (e) {
+    // Type changed to unknown
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    console.error(
+      `❌ [Step 7] YouTube URL input with selector "${youtubeUrlInputSelector}" not found. Error: ${errorMessage}. Trying fallback selectors...`,
+    );
+    // Fallback to less specific selectors if the primary one fails
+    const fallbackSelectors = [
+      "input[id^='mat-input-']",
+      "input[type='text']",
+      "input",
+    ];
+    let foundWithFallback = false;
+    for (const sel of fallbackSelectors) {
+      try {
+        await page.waitForSelector(sel, { timeout: 2000, visible: true }); // Shorter timeout for fallbacks
+        youtubeUrlInputSelector = sel; // Update selector if found
+        console.log(
+          "✅ [Step 7] YouTube URL input appeared using fallback selector:",
+          youtubeUrlInputSelector,
+        );
+        foundWithFallback = true;
+        break;
+      } catch (err) {
+        // Type changed to unknown
+        const fallbackErrorMessage =
+          err instanceof Error ? err.message : String(err);
+        // console.log(`Fallback selector "${sel}" not found. Error: ${fallbackErrorMessage}`);
+      }
+    }
+    if (!foundWithFallback) {
+      console.error(
+        "❌ [Step 7] All fallback selectors for YouTube URL input failed.",
+      );
+      await browser.disconnect();
+      return;
+    }
+  }
 
   // Step 8: Paste YouTube URL
   console.log("✍️ [Step 8] Pasting YouTube URL...");
-  const input = await page.$("input[type='text'], input");
+  const input = await page.$(youtubeUrlInputSelector); // Use the determined selector
   if (!input) {
-    console.error("❌ YouTube URL input field not found");
+    console.error(
+      `❌ YouTube URL input field not found with selector: ${youtubeUrlInputSelector}`,
+    );
     await browser.disconnect();
     return;
   }
