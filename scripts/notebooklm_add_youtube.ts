@@ -1,4 +1,17 @@
 import puppeteer, { Page } from "puppeteer-core"; // Import Page
+import fs from "fs";
+import path from "path";
+
+// Use the same absolute config path as master_podcast_generator.ts
+const personaPath = "/Users/jobenvy/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.maxenvy.json";
+const persona = JSON.parse(fs.readFileSync(personaPath, "utf-8"));
+
+// Dynamically get the first NotebookLM URL, YouTube channel URL, and title from the persona
+const firstPromptKey = Object.keys(persona.prompts)[0];
+const NOTEBOOK_URL = firstPromptKey;
+const channel = persona.prompts[firstPromptKey].channels[0];
+const YOUTUBE_URL = channel.url;
+const YOUTUBE_TITLE = channel.title;
 
 // Helper function to print visible buttons in a modal
 async function printVisibleButtons(page: Page, modalSelector: string) {
@@ -51,10 +64,6 @@ async function printVisibleButtons(page: Page, modalSelector: string) {
 }
 
 async function run() {
-  const YOUTUBE_URL = "https://youtu.be/ns2Jxcy4Zbo?si=q6Ym-GFi_qpOEAYo";
-  const YOUTUBE_TITLE =
-    "TOP 5 Most Cringy Job Postings On The Internet - My Reaction!"; // Optional, if needed for further processing
-
   const WAIT_FOR_LOGIN_MS = 10000; // 1 minute
 
   console.log("⏳ [Step 1] Waiting for Google login...");
