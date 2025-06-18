@@ -288,6 +288,10 @@ async function run() {
   if (!fs.existsSync(destDir)) fs.mkdirSync(destDir);
   fs.renameSync(srcPath, destPath);
   console.log(`✅ Audio saved to: ${destPath}`);
+  // Print the required output line for master script parsing
+  console.log(`FINAL_AUDIO_PATH: ${destPath}`);
+  // Print the required output for master script parsing
+  console.log(`FINAL_AUDIO_PATH: ${destPath}`);
 
   // Step 7: Re-open 3-dot menu and click Delete
   // Find the 3-dot menu button again (in case DOM changed)

@@ -197,185 +197,91 @@ async function runMasterWorkflow() {
       );
       const dirType = destDirParentName; // This will be "hosts", "podcasts", etc.
 
-      // --- MODIFICATION: Only proceed if dirType is "hosts" ---
-      if (dirType === "hosts") {
-        const targetJsonFileName = "hosts.json"; // Hardcode to "hosts.json"
-        // --- END MODIFICATION ---
-        const targetJsonPath = path.join(
-          promptEntry.destDir,
-          targetJsonFileName,
-        );
-        // Ensure we are trying to get metadata for "hosts" type from config
-        const metadataArrayForType = config.prompts?.[notebookUrl]?.[
-          "hosts"
-        ] as Array<any>;
-        const currentIndexForType = typeIndices["hosts"]; // Use hosts index
+      // --- Remove the restriction: update JSON for all subfolders, not just hosts ---
+      const targetJsonFileName = `${dirType}.json`;
+      const targetJsonPath = path.join(promptEntry.destDir, targetJsonFileName);
+      // Try to get metadata for the current type from config
+      const metadataArrayForType = config.prompts?.[notebookUrl]?.[
+        dirType
+      ] as Array<any>;
+      const currentIndexForType = typeIndices[dirType] ?? 0;
 
-        if (
-          metadataArrayForType &&
-          currentIndexForType < metadataArrayForType.length
-        ) {
-          const metadataToUpdate = metadataArrayForType[currentIndexForType];
-
-          if (metadataToUpdate) {
+      if (
+        metadataArrayForType &&
+        currentIndexForType < metadataArrayForType.length
+      ) {
+        const metadataToUpdate = metadataArrayForType[currentIndexForType];
+        if (metadataToUpdate) {
+          let jsonData: {
+            title: string | null;
+            sub_title: string | null;
+            description: string | null;
+            [key: string]: any;
+          } = {
+            title: metadataToUpdate.title || null,
+            sub_title: metadataToUpdate.sub_title || null,
+            description: metadataToUpdate.description || null,
+          };
+          // Add the main array for this type (e.g., hosts, podcasts, etc.)
+          jsonData[dirType] = [
+            {
+              timeOffset: metadataToUpdate.timeOffset || "00:10",
+              host: metadataToUpdate.host || "JimJam",
+              type: metadataToUpdate.type || "intro",
+              line: metadataToUpdate.line || "Default intro line.",
+            },
+          ];
+          // Add files array
+          const fileEntry = {
+            fileName: downloadedFilePath || null,
+            url: YOUTUBE_URL,
+            embedUrl: null,
+            type: "youtube",
+            title: YOUTUBE_TITLE,
+            heading: null,
+            description: metadataToUpdate.description || null,
+            thumbnail: null,
+            author: null,
+            duration: 0,
+            prompt: promptEntry.text || null,
+          };
+          // If file exists, merge/append
+          if (fs.existsSync(targetJsonPath)) {
             try {
-              console.log(
-                `📝 Creating/Overwriting ${targetJsonPath} with new template...`,
+              const existing = JSON.parse(
+                fs.readFileSync(targetJsonPath, "utf-8"),
               );
-              const newJsonData: { [key: string]: any } = {};
-
-              if (typeof metadataToUpdate.title === "string")
-                newJsonData.title = metadataToUpdate.title;
-              if (typeof metadataToUpdate.sub_title === "string")
-                newJsonData.sub_title = metadataToUpdate.sub_title;
-              if (typeof metadataToUpdate.description === "string")
-                newJsonData.description = metadataToUpdate.description;
-
-              const dynamicLineContent =
-                typeof metadataToUpdate.line === "string"
-                  ? metadataToUpdate.line
-                  : firstEntryTemplate.line;
-              const singleEntry = {
-                ...firstEntryTemplate,
-                line: dynamicLineContent,
+              jsonData = {
+                ...jsonData,
+                ...existing,
+                [dirType]: Array.isArray(existing[dirType])
+                  ? existing[dirType]
+                  : jsonData[dirType],
+                files: Array.isArray(existing.files) ? existing.files : [],
               };
-              // The key in newJsonData should still be "hosts" for hosts.json
-              newJsonData["hosts"] = [singleEntry];
-
-              if (
-                downloadedFilePath &&
-                metadataToUpdate.file_template_metadata &&
-                typeof metadataToUpdate.file_template_metadata === "object"
-              ) {
-                const actualFileDuration = 0;
-                console.log(
-                  `ℹ️ Using dummy duration: ${actualFileDuration}. Implement actual duration logic if needed.`,
-                );
-                const summaryText =
-                  typeof metadataToUpdate.summary_text === "string"
-                    ? metadataToUpdate.summary_text
-                    : DUMMY_SUMMARY_TEXT;
-                const fileEntry = {
-                  fileName: downloadedFilePath,
-                  ...metadataToUpdate.file_template_metadata,
-                  prompt: promptEntry.text,
-                  duration: actualFileDuration,
-                  summary: summaryText,
-                };
-                newJsonData.files = [fileEntry];
-                console.log(
-                  `ℹ️ Added file metadata for: ${downloadedFilePath} including prompt, duration, and summary.`,
-                );
-              } else {
-                newJsonData.files = [];
-                if (!downloadedFilePath)
-                  console.warn(
-                    "⚠️ Downloaded file path not available for 'files' array.",
-                  );
-                if (!metadataToUpdate.file_template_metadata)
-                  console.warn(
-                    "⚠️ 'file_template_metadata' not found in config for 'files' array.",
-                  );
-              }
-
-              // --- hosts.json update/append logic ---
-              let hostsJson: {
-                title: string | null;
-                sub_title: string | null;
-                description: string | null;
-                hosts: Array<any>;
-                files: Array<any>;
-              } = {
-                title: metadataToUpdate.title || null,
-                sub_title: metadataToUpdate.sub_title || null,
-                description: metadataToUpdate.description || null,
-                hosts: [
-                  {
-                    timeOffset: metadataToUpdate.timeOffset || "00:10",
-                    host: metadataToUpdate.host || "JimJam",
-                    type: metadataToUpdate.type || "intro",
-                    line: metadataToUpdate.line || "Default intro line.",
-                  },
-                ],
-                files: [],
-              };
-              if (fs.existsSync(targetJsonPath)) {
-                try {
-                  const existing = JSON.parse(
-                    fs.readFileSync(targetJsonPath, "utf-8"),
-                  );
-                  hostsJson = {
-                    ...hostsJson,
-                    ...existing,
-                    hosts: Array.isArray(existing.hosts)
-                      ? existing.hosts
-                      : hostsJson.hosts,
-                    files: Array.isArray(existing.files) ? existing.files : [],
-                  };
-                } catch {
-                  console.warn(
-                    `⚠️ Could not parse existing hosts.json, starting fresh.`,
-                  );
-                }
-              }
-              // Ensure all required file fields are present
-              const fileEntry: {
-                fileName: string | null;
-                url: string | null;
-                embedUrl: string | null;
-                type: string | null;
-                title: string | null;
-                heading: string | null;
-                description: string | null;
-                thumbnail: string | null;
-                author: string | null;
-                duration: number | null;
-                prompt: string | null;
-              } = {
-                fileName: downloadedFilePath || null,
-                url: YOUTUBE_URL,
-                embedUrl: null,
-                type: "youtube",
-                title: YOUTUBE_TITLE,
-                heading: null,
-                description: metadataToUpdate.description || null,
-                thumbnail: null,
-                author: null,
-                duration: 0,
-                prompt: promptEntry.text || null,
-              };
-              hostsJson.files.push(fileEntry);
-              fs.writeFileSync(
-                targetJsonPath,
-                JSON.stringify(hostsJson, null, 2),
-                "utf-8",
-              );
-              console.log(`✅ hosts.json updated at ${targetJsonPath}`);
-              // --- END hosts.json update/append logic ---
-
-              console.log(
-                `✅ Successfully created/overwritten ${targetJsonPath}.`,
-              );
-              typeIndices["hosts"]++; // Increment hosts index
-            } catch (updateError) {
-              console.error(
-                `❌ Error creating/updating ${targetJsonPath}:`,
-                updateError,
+            } catch {
+              console.warn(
+                `⚠️ Could not parse existing ${targetJsonFileName}, starting fresh.`,
               );
             }
-          } else {
-            console.warn(
-              `⚠️ No metadata object found in config for 'hosts' at index ${currentIndexForType}. Skipping JSON update.`,
-            );
           }
+          if (!jsonData.files) jsonData.files = [];
+          jsonData.files.push(fileEntry);
+          fs.writeFileSync(
+            targetJsonPath,
+            JSON.stringify(jsonData, null, 2),
+            "utf-8",
+          );
+          console.log(`✅ ${targetJsonFileName} updated at ${targetJsonPath}`);
+          typeIndices[dirType] = (typeIndices[dirType] ?? 0) + 1;
         } else {
           console.warn(
-            `⚠️ Metadata array not found or index out of bounds for 'hosts' at index ${currentIndexForType}. Skipping JSON update.`,
+            `⚠️ No metadata object found in config for '${dirType}' at index ${currentIndexForType}. Skipping JSON update.`,
           );
         }
       } else {
-        console.log(
-          `ℹ️ Skipping JSON update for directory type '${dirType}' as it is not 'hosts'.`,
+        console.warn(
+          `⚠️ Metadata array not found or index out of bounds for '${dirType}' at index ${currentIndexForType}. Skipping JSON update.`,
         );
       }
     } catch (error: any) {
