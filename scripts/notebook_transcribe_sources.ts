@@ -104,34 +104,42 @@ async function run() {
     await new Promise((r) => setTimeout(r, 120000));
 
     // Scroll to bottom and click the Copy to clipboard button
-    console.log("🔽 Scrolling to bottom and clicking Copy to clipboard...");
-    await notebookPage.evaluate(() =>
-      window.scrollTo(0, document.body.scrollHeight),
+    console.log(
+      "🔽 Locating and clicking the last visible Copy to clipboard button...",
     );
-    // Try to find the button by text or aria-label (using querySelectorAll and textContent)
-    const copyButtonHandle = await notebookPage.evaluateHandle(() => {
-      const buttons = Array.from(
-        document.querySelectorAll('button, [role="button"]'),
-      );
-      return (
-        buttons.find(
-          (btn) =>
-            btn.textContent &&
-            btn.textContent.toLowerCase().includes("copy to clipboard"),
-        ) || null
-      );
-    });
-    if (!copyButtonHandle || !copyButtonHandle.asElement()) {
+    // Find all buttons with the correct aria-label, pick the last one, scroll it into view, and click
+    const copyButtons = await notebookPage.$$(
+      'button[aria-label="Copy model response to clipboard"]',
+    );
+    if (!copyButtons.length) {
       console.error("❌ Could not find Copy to clipboard button.");
       return;
     }
-    await (
-      copyButtonHandle.asElement() as import("puppeteer-core").ElementHandle<Element>
-    ).click();
-    await copyButtonHandle.dispose();
+    const lastCopyButton = copyButtons[copyButtons.length - 1];
+    await lastCopyButton.evaluate((btn) =>
+      btn.scrollIntoView({ behavior: "smooth", block: "center" }),
+    );
+    await new Promise((r) => setTimeout(r, 1000)); // Give time for scroll
+    await lastCopyButton.click();
     console.log("✅ Clicked Copy to clipboard.");
 
     // Read clipboard content from browser context
+    console.log("📋 Checking for clipboard permission dialog...");
+    // Try to find and click the 'Allow' button if the clipboard permission dialog is present
+    const allButtons = await notebookPage.$$("button");
+    let allowClicked = false;
+    for (const btn of allButtons) {
+      const text = await btn.evaluate((el) => el.textContent?.trim());
+      if (text && text.toLowerCase() === "allow") {
+        console.log(
+          "🔓 Clipboard permission dialog detected. Clicking 'Allow'...",
+        );
+        await btn.click();
+        allowClicked = true;
+        await new Promise((r) => setTimeout(r, 1000));
+        break;
+      }
+    }
     console.log("📋 Reading clipboard content from browser clipboard...");
     const clipboardContent = await notebookPage.evaluate(async () => {
       // @ts-expect-error Puppeteer browser context may not have types for navigator.clipboard
