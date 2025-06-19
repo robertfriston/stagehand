@@ -1,6 +1,4 @@
 import puppeteer from "puppeteer-core";
-import fs from "fs";
-import path from "path";
 
 async function run() {
   console.log("🛠️ Running in mode: debug3");
@@ -169,82 +167,6 @@ async function run() {
         "⏳ Waiting 60 seconds for sources to load before clicking Import...",
       );
       await new Promise((r) => setTimeout(r, 60000));
-
-      // --- Extract YouTube results from the modal ---
-      const sources = await modal.evaluate(() => {
-        // Find all YouTube result rows (look for YouTube icon or links)
-        const rows = Array.from(
-          document.querySelectorAll(
-            'div[role="dialog"], .mat-mdc-dialog-container, .cdk-overlay-pane',
-          ),
-        )
-          .flatMap((modalEl) => Array.from(modalEl.querySelectorAll("div,li")))
-          .filter(
-            (el) =>
-              el.innerHTML.includes("youtube.com") ||
-              el.innerHTML.includes("YouTube"),
-          );
-        return rows.map((row) => {
-          // Try to extract title, channel, url
-          const link = row.querySelector('a[href*="youtube.com"]');
-          const title = link
-            ? link.textContent?.trim()
-            : row.textContent?.trim();
-          const url = link ? (link as HTMLAnchorElement).href : null;
-          // Try to find channel name (may be in a sibling or sub-element)
-          let channel = null;
-          const channelEl = Array.from(row.querySelectorAll("*")).find(
-            (e) => e.textContent && e.textContent.includes("YouTube"),
-          );
-          if (channelEl) channel = channelEl.textContent?.trim();
-          return { title, channel, url };
-        });
-      });
-      console.log("🔎 Extracted sources:", sources);
-
-      // --- Write slot-{timestamp}.json and update index.json ---
-      const prompt = DISCOVER_PROMPT;
-      const timestamp = new Date()
-        .toISOString()
-        .replace(/[-:T.]/g, "")
-        .slice(0, 14);
-      const slotsDir = path.resolve(__dirname, "..", "..", "media", "slots");
-      if (!fs.existsSync(slotsDir)) {
-        fs.mkdirSync(slotsDir, { recursive: true });
-      }
-      const slotFile = path.join(slotsDir, `slot-${timestamp}.json`);
-      const slotData = {
-        prompt,
-        created_at: new Date().toISOString(),
-        count: sources.length,
-        sources,
-        params: {
-          script: __filename,
-          notebook_url: page.url(),
-        },
-      };
-      fs.writeFileSync(slotFile, JSON.stringify(slotData, null, 2), "utf-8");
-      console.log(`✅ Wrote slot file: ${slotFile}`);
-
-      // Update index.json
-      const indexFile = path.join(slotsDir, "index.json");
-      let indexArr = [];
-      if (fs.existsSync(indexFile)) {
-        try {
-          indexArr = JSON.parse(fs.readFileSync(indexFile, "utf-8"));
-        } catch (err) {
-          console.warn("⚠️ Could not parse index.json, starting fresh.", err);
-        }
-      }
-      indexArr.push({
-        prompt,
-        slot_file: slotFile,
-        created_at: slotData.created_at,
-        count: sources.length,
-        params: slotData.params,
-      });
-      fs.writeFileSync(indexFile, JSON.stringify(indexArr, null, 2), "utf-8");
-      console.log(`✅ Updated index file: ${indexFile}`);
 
       // --- Now click Import as before ---
       const importButtons = await modal.$$('button, [role="button"]');

@@ -2,79 +2,48 @@ import puppeteer from "puppeteer-core";
 import fs from "fs";
 import path from "path";
 
-interface SlotSource {
-  title: string;
-  url: string;
-  channel: string;
-}
-
-interface SlotData {
-  prompt: string;
-  created_at: string;
-  count: number;
-  sources: SlotSource[];
-  params: {
-    script: string;
-    notebook_url: string;
-  };
-}
-
-/**
- * Finds the most recently created slot file in the media/slots directory.
- */
-function getLatestSlotFile(): string | null {
-  const slotsDir = path.resolve(__dirname, "..", "..", "media", "slots");
-  if (!fs.existsSync(slotsDir)) {
-    console.warn(
-      `⚠️ Slots directory not found at ${slotsDir}. Creating it now.`,
-    );
-    fs.mkdirSync(slotsDir, { recursive: true });
-  }
-
-  const files = fs
-    .readdirSync(slotsDir)
-    .filter((file) => file.startsWith("slot-") && file.endsWith(".json"))
-    .map((file) => ({
-      file,
-      mtime: fs.statSync(path.join(slotsDir, file)).mtime,
-    }))
-    .sort((a, b) => b.mtime.getTime() - a.mtime.getTime());
-
-  if (files.length === 0) {
-    console.error(`❌ Error: No slot files found in ${slotsDir}.`);
-    console.log(
-      "ℹ️ Please run the 'discover sources' workflow (option 3) first to generate a slot file.",
-    );
-    return null;
-  }
-
-  return path.join(slotsDir, files[0].file);
-}
+const PROMPT = `GIVE ME THE INFORMATION BACK IN THIS SCHEMA:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "YouTubeSource",
+  "description": "Schema for a YouTube video source used in NotebookLM",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Title of the YouTube video"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the video content"
+    },
+    "questions": {
+      "type": "array",
+      "description": "List of questions generated from or related to the video",
+      "items": {
+        "type": "string"
+      }
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Full URL of the YouTube video"
+    },
+    "channel": {
+      "type": "string",
+      "description": "Name of the YouTube channel that published the video"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Short summary of the video content and key themes"
+    }
+  },
+  "required": ["title", "description", "questions", "url", "channel", "summary"],
+  "additionalProperties": false
+}`;
 
 async function run() {
   console.log("🚀 Starting NotebookLM Transcribe Sources Workflow...");
-
-  const latestSlotFile = getLatestSlotFile();
-  if (!latestSlotFile) {
-    return;
-  }
-
-  console.log(`ℹ️ Using data from the latest slot file: ${latestSlotFile}`);
-  const slotData: SlotData = JSON.parse(
-    fs.readFileSync(latestSlotFile, "utf-8"),
-  );
-  const sourcesToProcess = slotData.sources.map((s) => s.title);
-
-  if (!sourcesToProcess || sourcesToProcess.length === 0) {
-    console.log("🤷 No sources to process in the slot file. Exiting.");
-    return;
-  }
-
-  console.log(
-    `🎯 Will attempt to find and click the following ${sourcesToProcess.length} source(s):`,
-  );
-  sourcesToProcess.forEach((title: string) => console.log(`  - ${title}`));
-
   let browser;
   try {
     console.log("🔗 Connecting to running Chrome instance...");
@@ -88,51 +57,89 @@ async function run() {
     const notebookPage = (await browser.pages()).find((p) =>
       p.url().includes("notebooklm.google.com/notebook/"),
     );
-
     if (!notebookPage) {
       console.error(
         "❌ No NotebookLM tab found. Please open a notebook first.",
       );
       return;
     }
-
     console.log("📄 Found NotebookLM tab:", notebookPage.url());
     await notebookPage.bringToFront();
 
-    // Wait for a bit to ensure sources are loaded in the UI
-    console.log(
-      "⏳ Waiting for 60 seconds to ensure sources are fully imported and rendered...",
-    );
+    // Find the chat textarea and paste the prompt
+    console.log("📝 Pasting prompt into chat textarea...");
+    const textareaSelector = "textarea";
+    await notebookPage.waitForSelector(textareaSelector, { timeout: 15000 });
+    const textarea = await notebookPage.$(textareaSelector);
+    if (!textarea) {
+      console.error("❌ Could not find chat textarea.");
+      return;
+    }
+    await textarea.focus();
+    await textarea.click({ clickCount: 3 });
+    await notebookPage.keyboard.press("Backspace");
+    await textarea.type(PROMPT, { delay: 10 });
+    await notebookPage.keyboard.press("Enter");
+    console.log("✅ Prompt submitted.");
+
+    // Wait for the AI to respond
+    console.log("⏳ Waiting 60 seconds for AI response...");
     await new Promise((r) => setTimeout(r, 60000));
 
-    for (const sourceTitle of sourcesToProcess) {
-      console.log(`🔍 Searching for source: "${sourceTitle}"`);
-
-      // This selector is a best-guess. It might need to be adjusted based on
-      // the actual HTML structure of the source list in NotebookLM.
-      const sourceElement = await notebookPage.evaluateHandle((title) => {
-        const sourceElements = Array.from(
-          document.querySelectorAll(".source-list-item .title"), // This selector was in the original file
-        );
-        // Use .includes() for a more flexible match against the title.
-        return sourceElements.find((el) =>
-          el.textContent?.trim().includes(title),
-        ) as HTMLElement | undefined;
-      }, sourceTitle);
-
-      if (sourceElement && sourceElement.asElement()) {
-        console.log(`  ✅ Found \"${sourceTitle}\". Clicking to process...`);
-        await (sourceElement.asElement() as puppeteer.ElementHandle).click();
-        await sourceElement.dispose();
-        // Wait a few seconds for NotebookLM to process the source
-        await new Promise((r) => setTimeout(r, 5000));
-        console.log(`  ✅ Finished processing "${sourceTitle}".`);
-      } else {
-        console.warn(
-          `  ⚠️ Could not find source element for: "${sourceTitle}"`,
-        );
-      }
+    // Scroll to bottom and click the Copy to clipboard button
+    console.log("🔽 Scrolling to bottom and clicking Copy to clipboard...");
+    await notebookPage.evaluate(() =>
+      window.scrollTo(0, document.body.scrollHeight),
+    );
+    // Try to find the button by text or aria-label (using querySelectorAll and textContent)
+    const copyButtonHandle = await notebookPage.evaluateHandle(() => {
+      const buttons = Array.from(
+        document.querySelectorAll('button, [role="button"]'),
+      );
+      return (
+        buttons.find(
+          (btn) =>
+            btn.textContent &&
+            btn.textContent.toLowerCase().includes("copy to clipboard"),
+        ) || null
+      );
+    });
+    if (!copyButtonHandle || !copyButtonHandle.asElement()) {
+      console.error("❌ Could not find Copy to clipboard button.");
+      return;
     }
+    await (
+      copyButtonHandle.asElement() as import("puppeteer-core").ElementHandle<Element>
+    ).click();
+    await copyButtonHandle.dispose();
+    console.log("✅ Clicked Copy to clipboard.");
+
+    // Read clipboard content from browser context
+    console.log("📋 Reading clipboard content from browser clipboard...");
+    const clipboardContent = await notebookPage.evaluate(async () => {
+      // @ts-expect-error Puppeteer browser context may not have types for navigator.clipboard
+      return await navigator.clipboard.readText();
+    });
+    let parsed;
+    try {
+      parsed = JSON.parse(clipboardContent);
+    } catch (e) {
+      console.error("❌ Failed to parse clipboard content as JSON:", e);
+      return;
+    }
+
+    // Save to file
+    const slotsDir = path.resolve(__dirname, "..", "..", "media", "slots");
+    if (!fs.existsSync(slotsDir)) {
+      fs.mkdirSync(slotsDir, { recursive: true });
+    }
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[-:T.]/g, "")
+      .slice(0, 14);
+    const slotFile = path.join(slotsDir, `slot-${timestamp}.json`);
+    fs.writeFileSync(slotFile, JSON.stringify(parsed, null, 2), "utf-8");
+    console.log(`✅ Saved results to: ${slotFile}`);
   } catch (error) {
     console.error(
       "❌ An error occurred during the transcription workflow:",
