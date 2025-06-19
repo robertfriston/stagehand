@@ -1,6 +1,7 @@
 #!/bin/bash
 
 
+trap 'echo; echo "Script interrupted. Exiting."; exit 130' INT
 # --- Argument parsing for mode and future args ---
 MODE=""
 OTHER_ARG=""
@@ -47,7 +48,9 @@ fi
 # If mode is not normal, acknowledge and exit
 if [[ "$MODE" != "normal" ]]; then
   echo "Mode '$MODE' selected. No behavior defined yet. Exiting."
-  exit 0
+  echo "[Process completed]"
+  # Forcefully terminate the shell session if possible
+  kill -9 $$
 fi
 
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
@@ -85,3 +88,9 @@ npx tsx "$PROJECT_DIR/scripts/notebooklm_add_youtube.ts"
 
 # Then run audio download script (original workflow)
 npx tsx "$SCRIPT"
+
+# Print process completed and forcefully exit if not interactive
+if [[ ! -t 0 ]]; then
+  echo "[Process completed]"
+  kill -9 $$
+fi
