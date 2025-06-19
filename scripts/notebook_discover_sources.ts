@@ -161,6 +161,30 @@ async function run() {
       } else {
         console.error("❌ No button found in Discover sources modal");
       }
+
+      // Wait 60 seconds before clicking Import
+      console.log(
+        "⏳ Waiting 60 seconds for sources to load before clicking Import...",
+      );
+      await new Promise((r) => setTimeout(r, 60000));
+
+      // Find and click the Import button in the modal
+      const importButtons = await modal.$$('button, [role="button"]');
+      let importClicked = false;
+      for (const btn of importButtons) {
+        const text = await btn.evaluate((el) =>
+          el.textContent?.trim().toLowerCase(),
+        );
+        if (text && text.includes("import")) {
+          await btn.click();
+          importClicked = true;
+          console.log("✅ Clicked Import button in Discover sources modal");
+          break;
+        }
+      }
+      if (!importClicked) {
+        console.error("❌ Import button not found in Discover sources modal");
+      }
     } else {
       console.error("❌ Discover button handle is not an element");
       await browser.disconnect();
