@@ -1,6 +1,7 @@
 import puppeteer from "puppeteer-core";
 import fs from "fs";
 import path from "path";
+import { searchYouTube } from "../youtube-api";
 
 const PROMPT = `GIVE ME THE INFORMATION BACK IN THIS SCHEMA:
 {
@@ -127,7 +128,6 @@ async function run() {
     console.log("📋 Checking for clipboard permission dialog...");
     // Try to find and click the 'Allow' button if the clipboard permission dialog is present
     const allButtons = await notebookPage.$$("button");
-    let allowClicked = false;
     for (const btn of allButtons) {
       const text = await btn.evaluate((el) => el.textContent?.trim());
       if (text && text.toLowerCase() === "allow") {
@@ -135,7 +135,6 @@ async function run() {
           "🔓 Clipboard permission dialog detected. Clicking 'Allow'...",
         );
         await btn.click();
-        allowClicked = true;
         await new Promise((r) => setTimeout(r, 1000));
         break;
       }
@@ -165,6 +164,21 @@ async function run() {
     } catch (e) {
       console.error("❌ Failed to parse extracted JSON string as JSON:", e);
       return;
+    }
+    // Fill missing URLs and channels using YouTube API
+    console.log("🔍 Enriching sources with YouTube API lookup for missing URLs...");
+    for (const item of parsed) {
+      if (!item.url || item.url.startsWith("[no url]")) {
+        console.log(`  🔎 Searching YouTube for title: ${item.title}`);
+        const result = await searchYouTube(item.title);
+        if (result) {
+          item.url = result.url;
+          item.channel = result.channel;
+          console.log(`    ✅ Found URL: ${item.url}`);
+        } else {
+          console.warn(`    ⚠️ No YouTube result for: ${item.title}`);
+        }
+      }
     }
 
     // Save to file
