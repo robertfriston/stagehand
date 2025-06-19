@@ -76,9 +76,26 @@ async function run() {
       return;
     }
     await textarea.focus();
+    await new Promise((r) => setTimeout(r, 3000));
     await textarea.click({ clickCount: 3 });
     await notebookPage.keyboard.press("Backspace");
-    await textarea.type(PROMPT, { delay: 10 });
+    await new Promise((r) => setTimeout(r, 3000));
+    // Directly set the value and dispatch input/change events
+    await notebookPage.evaluate(
+      (selector, prompt) => {
+        const textarea = document.querySelector(
+          selector,
+        ) as HTMLTextAreaElement;
+        if (textarea) {
+          textarea.value = prompt;
+          textarea.dispatchEvent(new Event("input", { bubbles: true }));
+          textarea.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      },
+      textareaSelector,
+      PROMPT,
+    );
+    await new Promise((r) => setTimeout(r, 3000));
     await notebookPage.keyboard.press("Enter");
     console.log("✅ Prompt submitted.");
 
