@@ -1,5 +1,44 @@
 #!/bin/bash
 
+
+# --- Argument parsing for mode and future args ---
+MODE=""
+OTHER_ARG=""
+# Add more default variables for future args as needed
+
+for arg in "$@"; do
+  case $arg in
+	mode=*)
+	  MODE="${arg#mode=}"
+	  ;;
+	other=*)
+	  OTHER_ARG="${arg#other=}"
+	  ;;
+	# Add more arguments here as needed
+  esac
+done
+
+# If no mode is set, prompt the user interactively
+if [[ -z "$MODE" ]]; then
+  echo "What mode?:"
+  select opt in "debug1" "debug2" "debug3" "normal"; do
+	case $opt in
+	  debug1|debug2|debug3|normal)
+		MODE="$opt"
+		break
+		;;
+	  *)
+		echo "Invalid option. Please choose 1, 2, 3, or 4."
+		;;
+	esac
+  done
+fi
+
+echo "🛠️ Running in mode: $MODE"
+if [[ -n "$OTHER_ARG" ]]; then
+  echo "Other argument: $OTHER_ARG"
+fi
+
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 PROJECT_DIR="$HOME/Documents/UTOPIA/stagehand"
 SCRIPT="$PROJECT_DIR/scripts/master_podcast_generator.ts"
@@ -7,7 +46,6 @@ SCRIPT="$PROJECT_DIR/scripts/master_podcast_generator.ts"
 # Dynamically extract the first NotebookLM URL from the persona config
 PERSONA_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.maxenvy.json"
 NOTEBOOK_URL=$(node -e "console.log(Object.keys(require('$PERSONA_JSON').prompts)[0])")
-
 
 echo "🔁 Launching Chrome..."
 pgrep -f "Chrome.*9222" > /dev/null || \
