@@ -61,76 +61,71 @@ async function run() {
 
       // Wait for the Discover sources modal and textarea to appear
       console.log("⏳ Waiting for Discover sources modal and textarea...");
-      try {
-        // Wait for the modal to appear (role=dialog or class contains dialog)
-        const modalSelectors = [
-          'div[role="dialog"]',
-          ".mat-mdc-dialog-container",
-          ".cdk-overlay-pane",
-        ];
-        let modal = null;
-        for (const sel of modalSelectors) {
-          await page.waitForSelector(sel, { timeout: 10000 });
-          const handles = await page.$$(sel);
-          for (const handle of handles) {
-            const visible = await handle.evaluate((el) => {
-              const style = window.getComputedStyle(el);
-              return (
-                style &&
-                style.display !== "none" &&
-                style.visibility !== "hidden" &&
-                style.opacity !== "0"
-              );
-            });
-            if (visible) {
-              modal = handle;
-              break;
-            }
-          }
-          if (modal) break;
-        }
-        if (!modal) {
-          console.error("❌ No visible Discover sources modal found");
-        } else {
-          // Wait for textarea inside the visible modal
-          const textarea = await modal.$("textarea");
-          if (textarea) {
-            // Add a 3 second delay before pasting
-            await new Promise((r) => setTimeout(r, 3000));
-            await textarea.focus();
-            await textarea.click({ clickCount: 3 }); // Select all
-            await page.keyboard.press("Backspace"); // Clear
-            await textarea.type(
-              "Find the latest YouTube videos that explore the current Job Market an the influence of A.I.",
-              { delay: 30 },
+      const DISCOVER_PROMPT =
+        "Find the latest YouTube videos that explore the current Job Market an the influence of A.I.";
+      // Modal selectors as in other workflows
+      const modalSelectors = [
+        'div[role="dialog"]',
+        ".mat-mdc-dialog-container",
+        ".cdk-overlay-pane",
+      ];
+      let modal = null;
+      for (const sel of modalSelectors) {
+        await page.waitForSelector(sel, { timeout: 5000 }).catch(() => {});
+        const handles = await page.$$(sel);
+        for (const handle of handles) {
+          const visible = await handle.evaluate((el) => {
+            const style = window.getComputedStyle(el);
+            return (
+              style &&
+              style.display !== "none" &&
+              style.visibility !== "hidden" &&
+              style.opacity !== "0" &&
+              (el as HTMLElement).offsetParent !== null
             );
-            // Trigger input/change events to ensure UI updates
-            await page.evaluate(
-              (el, value) => {
-                (el as HTMLTextAreaElement).value = value;
-                el.dispatchEvent(new Event("input", { bubbles: true }));
-                el.dispatchEvent(new Event("change", { bubbles: true }));
-              },
-              textarea,
-              "Find the latest YouTube videos that explore the current Job Market an the influence of A.I.",
-            );
-            // Add a 3 second delay after pasting
-            await new Promise((r) => setTimeout(r, 3000));
-            console.log(
-              "✅ Pasted prompt and triggered input/change events in Discover sources textarea",
-            );
-          } else {
-            console.error(
-              "❌ Discover sources textarea not found inside visible modal",
-            );
+          });
+          if (visible) {
+            modal = handle;
+            break;
           }
         }
-      } catch (e) {
-        console.error(
-          "❌ Error finding or typing in Discover sources textarea:",
-          e,
-        );
+        if (modal) break;
       }
+      if (!modal) {
+        console.error("❌ No visible Discover sources modal found");
+        await browser.disconnect();
+        return;
+      }
+      // Find the textarea inside the visible modal
+      const textarea = await modal.$("textarea");
+      if (!textarea) {
+        console.error(
+          "❌ Discover sources textarea not found inside visible modal",
+        );
+        await browser.disconnect();
+        return;
+      }
+      // Wait 3 seconds before pasting
+      await new Promise((r) => setTimeout(r, 3000));
+      await textarea.focus();
+      await textarea.click({ clickCount: 3 });
+      await page.keyboard.press("Backspace");
+      await textarea.type(DISCOVER_PROMPT, { delay: 30 });
+      // Trigger input/change events
+      await page.evaluate(
+        (el, value) => {
+          (el as HTMLTextAreaElement).value = value;
+          el.dispatchEvent(new Event("input", { bubbles: true }));
+          el.dispatchEvent(new Event("change", { bubbles: true }));
+        },
+        textarea,
+        DISCOVER_PROMPT,
+      );
+      // Wait 3 seconds after pasting
+      await new Promise((r) => setTimeout(r, 3000));
+      console.log(
+        "✅ Pasted prompt and triggered input/change events in Discover sources textarea",
+      );
     } else {
       console.error("❌ Discover button handle is not an element");
       await browser.disconnect();
