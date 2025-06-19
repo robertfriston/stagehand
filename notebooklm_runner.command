@@ -24,7 +24,7 @@ if [[ -z "$MODE" ]]; then
   echo "What mode?:"
   echo "1) debug1 - runs the 'add youtube' workflow only"
   echo "2) debug2 - runs the 'download audio' workflow only"
-  echo "3) debug3 - to be determined"
+  echo "3) debug3 - runs the 'discover sources' workflow only"
   echo "4) normal - runs the add youtube then the download audio"
   echo "5) headless - same as normal, but headless Chrome"
   echo "9) Exit"
