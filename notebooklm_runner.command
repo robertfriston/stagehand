@@ -110,7 +110,9 @@ case "$MODE" in
 	echo "[Process completed]"; exit 0
 	;;
   debug3)
-	echo "[debug3] No workflow defined yet. Exiting."
+	NOTEBOOK_DISCOVER_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_discover_sources.ts"
+	echo "[debug3] Running 'discover sources' workflow only..."
+	npx tsx "$NOTEBOOK_DISCOVER_SOURCES_SCRIPT"
 	echo "[Process completed]"; exit 0
 	;;
   normal)
