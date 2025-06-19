@@ -166,7 +166,9 @@ async function run() {
       return;
     }
     // Fill missing URLs and channels using YouTube API
-    console.log("🔍 Enriching sources with YouTube API lookup for missing URLs...");
+    console.log(
+      "🔍 Enriching sources with YouTube API lookup for missing URLs...",
+    );
     for (const item of parsed) {
       if (!item.url || item.url.startsWith("[no url]")) {
         console.log(`  🔎 Searching YouTube for title: ${item.title}`);
@@ -177,6 +179,23 @@ async function run() {
           console.log(`    ✅ Found URL: ${item.url}`);
         } else {
           console.warn(`    ⚠️ No YouTube result for: ${item.title}`);
+        }
+      }
+    }
+
+    // Convert watch URLs to embeddable URLs
+    console.log("🔄 Converting YouTube URLs to embeddable format...");
+    for (const item of parsed) {
+      if (item.url && item.url.includes("watch?v=")) {
+        const videoId = item.url.split("v=")[1];
+        if (videoId) {
+          const ampersandPosition = videoId.indexOf("&");
+          const cleanVideoId =
+            ampersandPosition !== -1
+              ? videoId.substring(0, ampersandPosition)
+              : videoId;
+          item.url = `https://www.youtube.com/embed/${cleanVideoId}`;
+          console.log(`  ✅ Converted URL for "${item.title}" to: ${item.url}`);
         }
       }
     }
