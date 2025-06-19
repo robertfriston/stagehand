@@ -34,9 +34,16 @@ if [[ -z "$MODE" ]]; then
   done
 fi
 
+
 echo "🛠️ Running in mode: $MODE"
 if [[ -n "$OTHER_ARG" ]]; then
   echo "Other argument: $OTHER_ARG"
+fi
+
+# If mode is not normal, acknowledge and exit
+if [[ "$MODE" != "normal" ]]; then
+  echo "Mode '$MODE' selected. No behavior defined yet. Exiting."
+  exit 0
 fi
 
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
