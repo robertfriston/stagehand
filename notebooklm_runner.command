@@ -10,10 +10,8 @@ OTHER_ARG=""
 for arg in "$@"; do
   case $arg in
 	mode=*)
-	  MODE="${arg#mode=}"
 	  ;;
 	other=*)
-	  OTHER_ARG="${arg#other=}"
 	  ;;
 	# Add more arguments here as needed
   esac
@@ -24,27 +22,22 @@ if [[ -z "$MODE" ]]; then
   echo "What mode?:"
   echo "1) debug1 - runs the 'add youtube' workflow only"
   echo "2) debug2 - runs the 'download audio' workflow only"
-  echo "3) debug3 - runs the 'discover sources' workflow only"
-  echo "4) normal - runs the add youtube then the download audio"
-  echo "5) headless - same as normal, but headless Chrome"
+  echo "3) debug3 - runs the 'discover sources' and then 'transcribe sources' workflows"
+  echo "4) Transcribe Latest Imported Sources (run after discover)"
+  echo "5) normal - runs the add youtube then the download audio"
+  echo "6) headless - same as normal, but headless Chrome"
   echo "9) Exit"
   while true; do
 	read -p "#? " mode_choice
 	case $mode_choice in
-	  1)
-		MODE="debug1"; break ;;
-	  2)
-		MODE="debug2"; break ;;
-	  3)
-		MODE="debug3"; break ;;
-	  4)
-		MODE="normal"; break ;;
-	  5)
-		MODE="headless"; break ;;
-	  9)
-		echo "Exiting script."; exit 0 ;;
-	  *)
-		echo "Invalid option. Please choose a valid number (1-5,9)." ;;
+    1) MODE="debug1"; break ;;
+    2) MODE="debug2"; break ;;
+    3) MODE="debug3"; break ;;
+    4) MODE="debug4"; break ;;
+    5) MODE="normal"; break ;;
+    6) MODE="headless"; break ;;
+    9) exit 0 ;;
+    *) echo "Invalid option";;
 	esac
   done
 fi
@@ -111,22 +104,31 @@ case "$MODE" in
 	;;
   debug3)
 	NOTEBOOK_DISCOVER_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_discover_sources.ts"
-	echo "[debug3] Running 'discover sources' workflow only..."
+    NOTEBOOK_TRANSCRIBE_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_transcribe_sources.ts"
+	echo "[debug3] Running 'discover sources' workflow..."
 	npx tsx "$NOTEBOOK_DISCOVER_SOURCES_SCRIPT"
+    echo "[debug3] Discover sources workflow complete. Starting transcription workflow..."
+    npx tsx "$NOTEBOOK_TRANSCRIBE_SOURCES_SCRIPT"
 	echo "[Process completed]"; exit 0
 	;;
+  debug4)
+    NOTEBOOK_TRANSCRIBE_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_transcribe_sources.ts"
+    echo "[debug4] Running 'transcribe sources' workflow only..."
+    npx tsx "$NOTEBOOK_TRANSCRIBE_SOURCES_SCRIPT"
+    echo "[Process completed]"; exit 0
+    ;;
   normal)
-	echo "[normal] Running both workflows: add youtube, then download audio..."
-	npx tsx "$ADD_YOUTUBE_SCRIPT"
-	npx tsx "$SCRIPT"
+    echo "[normal] Running 'add youtube' then 'download audio' workflows..."
+    npx tsx "$ADD_YOUTUBE_SCRIPT"
+    npx tsx "$SCRIPT"
 	;;
   headless)
-	echo "[headless] Running both workflows: add youtube, then download audio (headless Chrome)..."
-	npx tsx "$ADD_YOUTUBE_SCRIPT"
-	npx tsx "$SCRIPT"
+    echo "[headless] Running 'add youtube' then 'download audio' workflows..."
+    npx tsx "$ADD_YOUTUBE_SCRIPT"
+    npx tsx "$SCRIPT"
 	;;
   *)
-	echo "Unknown mode: $MODE. Exiting."; exit 1
+    echo "Invalid mode selected"
 	;;
 esac
 

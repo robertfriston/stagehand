@@ -208,8 +208,10 @@ async function run() {
         .toISOString()
         .replace(/[-:T.]/g, "")
         .slice(0, 14);
-      const slotsDir = "/Users/jobenvy/Documents/UTOPIA/media/slots";
-      if (!fs.existsSync(slotsDir)) fs.mkdirSync(slotsDir, { recursive: true });
+      const slotsDir = path.resolve(__dirname, "..", "..", "media", "slots");
+      if (!fs.existsSync(slotsDir)) {
+        fs.mkdirSync(slotsDir, { recursive: true });
+      }
       const slotFile = path.join(slotsDir, `slot-${timestamp}.json`);
       const slotData = {
         prompt,
