@@ -21,14 +21,18 @@ done
 # If no mode is set, prompt the user interactively
 if [[ -z "$MODE" ]]; then
   echo "What mode?:"
-  select opt in "debug1" "debug2" "debug3" "normal"; do
+  select opt in "debug1" "debug2" "debug3" "normal" "Exit"; do
 	case $opt in
 	  debug1|debug2|debug3|normal)
 		MODE="$opt"
 		break
 		;;
+	  Exit)
+		echo "Exiting script."
+		exit 0
+		;;
 	  *)
-		echo "Invalid option. Please choose 1, 2, 3, or 4."
+		echo "Invalid option. Please choose a valid number."
 		;;
 	esac
   done
