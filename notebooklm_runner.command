@@ -25,8 +25,9 @@ if [[ -z "$MODE" ]]; then
   echo "1) debug1 - runs the 'add youtube' workflow only"
   echo "2) debug2 - runs the 'download audio' workflow only"
   echo "3) debug3 - to be determined"
-  echo "4) normal - works as it does now - runs the add youtube then the download audio"
-  echo "5) Exit"
+  echo "4) normal - runs the add youtube then the download audio"
+  echo "5) headless - same as normal, but headless Chrome"
+  echo "9) Exit"
   while true; do
 	read -p "#? " mode_choice
 	case $mode_choice in
@@ -39,9 +40,11 @@ if [[ -z "$MODE" ]]; then
 	  4)
 		MODE="normal"; break ;;
 	  5)
+		MODE="headless"; break ;;
+	  9)
 		echo "Exiting script."; exit 0 ;;
 	  *)
-		echo "Invalid option. Please choose a valid number (1-5)." ;;
+		echo "Invalid option. Please choose a valid number (1-5,9)." ;;
 	esac
   done
 fi
@@ -53,6 +56,7 @@ if [[ -n "$OTHER_ARG" ]]; then
 fi
 
 
+
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 PROJECT_DIR="$HOME/Documents/UTOPIA/stagehand"
 SCRIPT="$PROJECT_DIR/scripts/master_podcast_generator.ts"
@@ -62,13 +66,21 @@ ADD_YOUTUBE_SCRIPT="$PROJECT_DIR/scripts/notebooklm_add_youtube.ts"
 PERSONA_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.maxenvy.json"
 NOTEBOOK_URL=$(node -e "console.log(Object.keys(require('$PERSONA_JSON').prompts)[0])")
 
+# Set Chrome flags for headless if needed
+CHROME_FLAGS="--remote-debugging-port=9222 --user-data-dir=/tmp/stagehand-chrome-session --no-proxy-server --start-maximized"
+if [[ "$MODE" == "headless" ]]; then
+  CHROME_FLAGS="$CHROME_FLAGS --headless=new"
+fi
+
 echo "🔁 Launching Chrome..."
 pgrep -f "Chrome.*9222" > /dev/null || \
-"$CHROME" --remote-debugging-port=9222 --user-data-dir="/tmp/stagehand-chrome-session" --no-proxy-server --start-maximized &
+"$CHROME" $CHROME_FLAGS &
 
-echo "🌐 Opening Notebook..."
-sleep 3
-osascript <<EOF
+# Only open GUI tabs if not headless
+if [[ "$MODE" != "headless" ]]; then
+  echo "🌐 Opening Notebook..."
+  sleep 3
+  osascript <<EOF
 tell application "Google Chrome"
 	if not (exists window 1) then make new window
 	tell window 1
@@ -78,6 +90,7 @@ tell application "Google Chrome"
 	activate
 end tell
 EOF
+fi
 
 echo "⏳ Waiting for login..."
 sleep 10
@@ -102,6 +115,11 @@ case "$MODE" in
 	;;
   normal)
 	echo "[normal] Running both workflows: add youtube, then download audio..."
+	npx tsx "$ADD_YOUTUBE_SCRIPT"
+	npx tsx "$SCRIPT"
+	;;
+  headless)
+	echo "[headless] Running both workflows: add youtube, then download audio (headless Chrome)..."
 	npx tsx "$ADD_YOUTUBE_SCRIPT"
 	npx tsx "$SCRIPT"
 	;;
