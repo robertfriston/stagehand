@@ -112,11 +112,12 @@ async function run() {
       // the actual HTML structure of the source list in NotebookLM.
       const sourceElement = await notebookPage.evaluateHandle((title) => {
         const sourceElements = Array.from(
-          document.querySelectorAll(".source-list-item .title"), // This selector is a guess
+          document.querySelectorAll(".source-list-item .title"), // This selector was in the original file
         );
-        return sourceElements.find((el) => el.textContent?.trim() === title) as
-          | HTMLElement
-          | undefined;
+        // Use .includes() for a more flexible match against the title.
+        return sourceElements.find((el) =>
+          el.textContent?.trim().includes(title),
+        ) as HTMLElement | undefined;
       }, sourceTitle);
 
       if (sourceElement && sourceElement.asElement()) {
