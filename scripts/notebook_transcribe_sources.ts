@@ -100,8 +100,8 @@ async function run() {
     console.log("✅ Prompt submitted.");
 
     // Wait for the AI to respond
-    console.log("⏳ Waiting 60 seconds for AI response...");
-    await new Promise((r) => setTimeout(r, 60000));
+    console.log("⏳ Waiting 120 seconds for AI response...");
+    await new Promise((r) => setTimeout(r, 120000));
 
     // Scroll to bottom and click the Copy to clipboard button
     console.log("🔽 Scrolling to bottom and clicking Copy to clipboard...");
