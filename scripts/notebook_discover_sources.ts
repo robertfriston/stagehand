@@ -126,6 +126,41 @@ async function run() {
       console.log(
         "✅ Pasted prompt and triggered input/change events in Discover sources textarea",
       );
+
+      // Click the Submit button in the modal
+      const submitButton = await modal.$('button, [role="button"]');
+      if (submitButton) {
+        // Find the button with text 'Submit' (case-insensitive)
+        const btnText = await submitButton.evaluate((el) =>
+          el.textContent?.trim().toLowerCase(),
+        );
+        if (btnText && btnText.includes("submit")) {
+          await submitButton.click();
+          console.log("✅ Clicked Submit button in Discover sources modal");
+        } else {
+          // If the first button isn't Submit, search all buttons in the modal
+          const allButtons = await modal.$$('button, [role="button"]');
+          let clicked = false;
+          for (const btn of allButtons) {
+            const text = await btn.evaluate((el) =>
+              el.textContent?.trim().toLowerCase(),
+            );
+            if (text && text.includes("submit")) {
+              await btn.click();
+              clicked = true;
+              console.log("✅ Clicked Submit button in Discover sources modal");
+              break;
+            }
+          }
+          if (!clicked) {
+            console.error(
+              "❌ Submit button not found in Discover sources modal",
+            );
+          }
+        }
+      } else {
+        console.error("❌ No button found in Discover sources modal");
+      }
     } else {
       console.error("❌ Discover button handle is not an element");
       await browser.disconnect();
