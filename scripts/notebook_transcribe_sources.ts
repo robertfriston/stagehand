@@ -141,15 +141,29 @@ async function run() {
       }
     }
     console.log("📋 Reading clipboard content from browser clipboard...");
+    // Read raw clipboard content
     const clipboardContent = await notebookPage.evaluate(async () => {
-      // @ts-expect-error Puppeteer browser context may not have types for navigator.clipboard
       return await navigator.clipboard.readText();
     });
+    console.log("🛠️ Debug: raw clipboard content:\n", clipboardContent);
+    // Extract JSON array from any surrounding text
+    let jsonString = clipboardContent;
+    const firstBracket = jsonString.indexOf("[");
+    const lastBracket = jsonString.lastIndexOf("]");
+    if (
+      firstBracket !== -1 &&
+      lastBracket !== -1 &&
+      lastBracket > firstBracket
+    ) {
+      jsonString = jsonString.substring(firstBracket, lastBracket + 1);
+    }
+    jsonString = jsonString.trim();
+    console.log("🛠️ Debug: extracted JSON string:\n", jsonString);
     let parsed;
     try {
-      parsed = JSON.parse(clipboardContent);
+      parsed = JSON.parse(jsonString);
     } catch (e) {
-      console.error("❌ Failed to parse clipboard content as JSON:", e);
+      console.error("❌ Failed to parse extracted JSON string as JSON:", e);
       return;
     }
 
