@@ -102,6 +102,10 @@ export async function searchYouTube(
     const title = video.snippet?.title;
     const channel = video.snippet?.channelTitle;
 
+    console.log(
+      `[DEBUG] YouTube API returned videoId: ${videoId} for query: "${query}"`,
+    );
+
     if (!videoId || !title || !channel) {
       return null;
     }

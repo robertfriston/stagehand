@@ -170,16 +170,15 @@ async function run() {
       "🔍 Enriching sources with YouTube API lookup for missing URLs...",
     );
     for (const item of parsed) {
-      if (!item.url || item.url.startsWith("[no url]")) {
-        console.log(`  🔎 Searching YouTube for title: ${item.title}`);
-        const result = await searchYouTube(item.title);
-        if (result) {
-          item.url = result.url;
-          item.channel = result.channel;
-          console.log(`    ✅ Found URL: ${item.url}`);
-        } else {
-          console.warn(`    ⚠️ No YouTube result for: ${item.title}`);
-        }
+      // Always search YouTube to get the canonical URL and video ID
+      console.log(`  🔎 Searching YouTube for title: ${item.title}`);
+      const result = await searchYouTube(item.title);
+      if (result) {
+        item.url = result.url;
+        item.channel = result.channel;
+        console.log(`    ✅ Found URL: ${item.url}`);
+      } else {
+        console.warn(`    ⚠️ No YouTube result for: ${item.title}`);
       }
     }
 
