@@ -26,7 +26,7 @@ if [[ -z "$MODE" ]]; then
   echo "4) Transcribe Latest Imported Sources (run after discover)"
   echo "5) normal - runs the add youtube then the download audio"
   echo "6) headless - same as normal, but headless Chrome"
-  echo "7) podcasts-from-transcribe - generate podcasts from transcribed sources (REAL)"
+  echo "7) podcasts-from-transcribe - generate podcasts from transcribed sources (FINAL)"
   echo "9) Exit"
   while true; do
 	read -p "#? " mode_choice
@@ -129,8 +129,8 @@ case "$MODE" in
     npx tsx "$SCRIPT"
 	;;
   podcasts-from-transcribe)
-    NOTEBOOK_PODCAST_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_podcast_sources_real.ts"
-    echo "[podcasts-from-transcribe] Running podcast generation from transcribed sources (REAL)..."
+    NOTEBOOK_PODCAST_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_podcast_sources_final.ts"
+    echo "[podcasts-from-transcribe] Running podcast generation from transcribed sources (FINAL)..."
     npx tsx "$NOTEBOOK_PODCAST_SOURCES_SCRIPT"
     echo "[Process completed]"; exit 0
     ;;
