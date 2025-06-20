@@ -22,7 +22,7 @@ if [[ -z "$MODE" ]]; then
   echo "What mode?:"
   echo "1) debug1 - runs the 'add youtube' workflow only"
   echo "2) debug2 - runs the 'download audio' workflow only"
-  echo "3) debug3 - runs the 'discover sources' and then 'transcribe sources' workflows"
+  echo "3) debug3 - RUNS THE NEW DISCOVER FOLLWED BY TRANSCRIBE WORKFLOWS"
   echo "4) Transcribe Latest Imported Sources (run after discover)"
   echo "5) normal - runs the add youtube then the download audio"
   echo "6) headless - same as normal, but headless Chrome"

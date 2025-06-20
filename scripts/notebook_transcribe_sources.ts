@@ -231,7 +231,7 @@ async function run() {
 
     const newIndexEntry = {
       prompt:
-        "Find the latest YouTube videos that explore the current Job Market an the influence of A.I.",
+        "Search the latest videos from the following YouTube channels: Jack Morgan RLP 2.0, Joshua Fluke, Labor Gains, Andy Thomas, A Life After Layoff, David Shapiro, After Skool, Tom Bilyeu, Large Man Abroad. Focus on content that explores the current state of the job market and how artificial intelligence is influencing hiring trends, displacing traditional roles, or creating new career opportunities.",
       slot_file: slotFile,
       created_at: new Date().toISOString(),
       count: parsed.length,
