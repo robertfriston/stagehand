@@ -190,6 +190,44 @@ async function run() {
         await new Promise((r) => setTimeout(r, 60000));
 
         // --- Now click Import as before ---
+        // Uncheck all sources that are NOT YouTube videos (wait 3s between each)
+        console.log("🔍 Unchecking all non-YouTube sources before Import...");
+        const sourceItems = await modal.$$(".source-item");
+        for (const item of sourceItems) {
+          // Check if this item is a YouTube video (look for YouTube icon or text)
+          const isYouTube = await item.evaluate((el) => {
+            // Look for a YouTube icon or text in the item
+            const icon = el.querySelector(
+              "svg, .mat-icon, .mat-icon-no-color, .source-icon",
+            );
+            if (
+              icon &&
+              icon.textContent &&
+              icon.textContent.toLowerCase().includes("youtube")
+            )
+              return true;
+            // Fallback: look for YouTube in the title or text
+            return (
+              el.textContent && el.textContent.toLowerCase().includes("youtube")
+            );
+          });
+          if (!isYouTube) {
+            // Find the checkbox input in this item
+            const checkbox = await item.$('input[type="checkbox"]');
+            if (checkbox) {
+              const checked = await checkbox.evaluate(
+                (el) => (el as HTMLInputElement).checked,
+              );
+              if (checked) {
+                await checkbox.click();
+                console.log("☑️ Unchecked non-YouTube source");
+                await new Promise((r) => setTimeout(r, 3000));
+              }
+            }
+          }
+        }
+
+        // --- Now click Import as before ---
         const importButtons = await modal.$$('button, [role="button"]');
         let importClicked = false;
         for (const btn of importButtons) {
