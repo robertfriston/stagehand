@@ -61,8 +61,12 @@ async function run() {
 
       // Wait for the Discover sources modal and textarea to appear
       console.log("⏳ Waiting for Discover sources modal and textarea...");
+      //const DISCOVER_PROMPT =
+      //  "Search the latest videos from the following YouTube channels: Jack Morgan RLP 2.0, Joshua Fluke, Labor Gains, Andy Thomas, A Life After Layoff, David Shapiro, After Skool, Tom Bilyeu, Large Man Abroad. Focus on content that explores the current state of the job market and how artificial intelligence is influencing hiring trends, displacing traditional roles, or creating new career opportunities.";
+
       const DISCOVER_PROMPT =
-        "Search the latest videos from the following YouTube channels: Jack Morgan RLP 2.0, Joshua Fluke, Labor Gains, Andy Thomas, A Life After Layoff, David Shapiro, After Skool, Tom Bilyeu, Large Man Abroad. Focus on content that explores the current state of the job market and how artificial intelligence is influencing hiring trends, displacing traditional roles, or creating new career opportunities.";
+        "Discover public YouTube videos with captions on the current job market and the impact of artificial intelligence. Focus on recent content (older than 72 hours) that discusses hiring trends, job displacement, emerging roles, and AI-driven career shifts.";
+
       // Modal selectors as in other workflows
       const modalSelectors = [
         'div[role="dialog"]',

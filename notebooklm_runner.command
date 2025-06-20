@@ -105,8 +105,8 @@ case "$MODE" in
   debug3)
     echo "🚀 Running Discover Sources script..."
     ts-node "$PROJECT_DIR/scripts/notebook_discover_sources.ts"
-    echo "✅ Discover finished. Waiting 5 seconds before transcribing..."
-    sleep 5
+    echo "✅ Discover finished. Waiting 60 seconds before transcribing..."
+    sleep 60
     echo "🚀 Running Transcribe Sources script..."
     ts-node "$PROJECT_DIR/scripts/notebook_transcribe_sources.ts"
 	;;
