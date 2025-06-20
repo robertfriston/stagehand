@@ -26,6 +26,7 @@ if [[ -z "$MODE" ]]; then
   echo "4) Transcribe Latest Imported Sources (run after discover)"
   echo "5) normal - runs the add youtube then the download audio"
   echo "6) headless - same as normal, but headless Chrome"
+  echo "7) podcasts-from-transcribe - generate podcasts from transcribed sources (REAL)"
   echo "9) Exit"
   while true; do
 	read -p "#? " mode_choice
@@ -36,6 +37,7 @@ if [[ -z "$MODE" ]]; then
     4) MODE="debug4"; break ;;
     5) MODE="normal"; break ;;
     6) MODE="headless"; break ;;
+    7) MODE="podcasts-from-transcribe"; break ;;
     9) exit 0 ;;
     *) echo "Invalid option";;
 	esac
@@ -126,6 +128,12 @@ case "$MODE" in
     npx tsx "$ADD_YOUTUBE_SCRIPT"
     npx tsx "$SCRIPT"
 	;;
+  podcasts-from-transcribe)
+    NOTEBOOK_PODCAST_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_podcast_sources_real.ts"
+    echo "[podcasts-from-transcribe] Running podcast generation from transcribed sources (REAL)..."
+    npx tsx "$NOTEBOOK_PODCAST_SOURCES_SCRIPT"
+    echo "[Process completed]"; exit 0
+    ;;
   *)
     echo "Invalid mode selected"
 	;;
