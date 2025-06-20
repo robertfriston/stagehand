@@ -141,8 +141,8 @@ async function run() {
     }
     console.log("📋 Reading clipboard content from browser clipboard...");
     // Read raw clipboard content
-    const clipboardContent = await notebookPage.evaluate(async () => {
-      return await navigator.clipboard.readText();
+    const clipboardContent = await notebookPage.evaluate(() => {
+      return navigator.clipboard.readText();
     });
     console.log("🛠️ Debug: raw clipboard content:\n", clipboardContent);
     // Extract JSON array from any surrounding text
