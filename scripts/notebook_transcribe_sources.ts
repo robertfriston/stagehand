@@ -3,43 +3,48 @@ import fs from "fs";
 import path from "path";
 import { searchYouTube } from "../youtube-api";
 
-const PROMPT = `GIVE ME THE INFORMATION BACK IN THIS SCHEMA:
+const PROMPT = `From the current NotebookLM sources, return only those that are YouTube videos. For each one, extract and return a structured JSON object using the following schema. The response should be a JSON array, where each item corresponds to a separate YouTube video.
+
+Use this schema:
+
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "YouTubeSource",
-  "description": "Schema for a YouTube video source used in NotebookLM",
+  "title": "YouTubeVideoInsight",
+  "description": "Structured data for a YouTube video source",
   "type": "object",
   "properties": {
     "title": {
       "type": "string",
-      "description": "Title of the YouTube video"
+      "description": "The title of the YouTube video"
     },
     "description": {
       "type": "string",
-      "description": "Detailed description of the video content"
+      "description": "The full description or transcript summary of the video"
     },
-    "questions": {
-      "type": "array",
-      "description": "List of questions generated from or related to the video",
-      "items": {
-        "type": "string"
-      }
+    "summary": {
+      "type": "string",
+      "description": "A concise summary of the main ideas or arguments presented"
+    },
+    "channel": {
+      "type": "string",
+      "description": "The name of the YouTube channel"
     },
     "url": {
       "type": "string",
       "format": "uri",
-      "description": "Full URL of the YouTube video"
+      "description": "The full YouTube video URL"
     },
-    "channel": {
-      "type": "string",
-      "description": "Name of the YouTube channel that published the video"
-    },
-    "summary": {
-      "type": "string",
-      "description": "Short summary of the video content and key themes"
+    "questions": {
+      "type": "array",
+      "description": "3–5 questions based on the video's content",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 3,
+      "maxItems": 5
     }
   },
-  "required": ["title", "description", "questions", "url", "channel", "summary"],
+  "required": ["title", "description", "summary", "channel", "url", "questions"],
   "additionalProperties": false
 }`;
 
@@ -101,8 +106,8 @@ async function run() {
     console.log("✅ Prompt submitted.");
 
     // Wait for the AI to respond
-    console.log("⏳ Waiting 120 seconds for AI response...");
-    await new Promise((r) => setTimeout(r, 120000));
+    console.log("⏳ Waiting 180 seconds for AI response...");
+    await new Promise((r) => setTimeout(r, 180000));
 
     // Scroll to bottom and click the Copy to clipboard button
     console.log(
