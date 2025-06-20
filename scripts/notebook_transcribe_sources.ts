@@ -211,6 +211,43 @@ async function run() {
     const slotFile = path.join(slotsDir, `slot-${timestamp}.json`);
     fs.writeFileSync(slotFile, JSON.stringify(parsed, null, 2), "utf-8");
     console.log(`✅ Saved results to: ${slotFile}`);
+
+    // Update the master index file
+    const indexFilePath = path.join(slotsDir, "index.json");
+    let indexData = [];
+    try {
+      if (fs.existsSync(indexFilePath)) {
+        const currentData = fs.readFileSync(indexFilePath, "utf-8");
+        indexData = JSON.parse(currentData);
+        if (!Array.isArray(indexData)) {
+          console.warn("⚠️ index.json is not an array. Re-initializing.");
+          indexData = [];
+        }
+      }
+    } catch (e) {
+      console.error("❌ Error reading or parsing index.json:", e);
+      indexData = []; // Reset if there's an error
+    }
+
+    const newIndexEntry = {
+      prompt:
+        "Find the latest YouTube videos that explore the current Job Market an the influence of A.I.",
+      slot_file: slotFile,
+      created_at: new Date().toISOString(),
+      count: parsed.length,
+      params: {
+        script: __filename,
+        notebook_url: notebookPage.url(),
+      },
+    };
+
+    indexData.push(newIndexEntry);
+    fs.writeFileSync(
+      indexFilePath,
+      JSON.stringify(indexData, null, 2),
+      "utf-8",
+    );
+    console.log(`✅ Updated index file at: ${indexFilePath}`);
   } catch (error) {
     console.error(
       "❌ An error occurred during the transcription workflow:",

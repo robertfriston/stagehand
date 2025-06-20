@@ -103,13 +103,12 @@ case "$MODE" in
 	echo "[Process completed]"; exit 0
 	;;
   debug3)
-	NOTEBOOK_DISCOVER_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_discover_sources.ts"
-    NOTEBOOK_TRANSCRIBE_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_transcribe_sources.ts"
-	echo "[debug3] Running 'discover sources' workflow..."
-	npx tsx "$NOTEBOOK_DISCOVER_SOURCES_SCRIPT"
-    echo "[debug3] Discover sources workflow complete. Starting transcription workflow..."
-    npx tsx "$NOTEBOOK_TRANSCRIBE_SOURCES_SCRIPT"
-	echo "[Process completed]"; exit 0
+    echo "🚀 Running Discover Sources script..."
+    ts-node "$PROJECT_DIR/scripts/notebook_discover_sources.ts"
+    echo "✅ Discover finished. Waiting 5 seconds before transcribing..."
+    sleep 5
+    echo "🚀 Running Transcribe Sources script..."
+    ts-node "$PROJECT_DIR/scripts/notebook_transcribe_sources.ts"
 	;;
   debug4)
     NOTEBOOK_TRANSCRIBE_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_transcribe_sources.ts"
