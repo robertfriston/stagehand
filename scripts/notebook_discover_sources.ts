@@ -1,22 +1,25 @@
-
 import puppeteer from "puppeteer-core";
 import fs from "fs";
 import path from "path";
 
-
 async function run() {
   // Load persona config and extract discover prompts
-  const configPath = "/Users/jobenvy/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.maxenvy.json";
+  const configPath =
+    "/Users/jobenvy/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.maxenvy.json";
   const configRaw = fs.readFileSync(configPath, "utf-8");
   const config = JSON.parse(configRaw);
   const notebookUrls = Object.keys(config.prompts);
-  if (notebookUrls.length === 0) throw new Error("No NotebookLM URLs found in config.");
+  if (notebookUrls.length === 0)
+    throw new Error("No NotebookLM URLs found in config.");
   const notebookUrl = notebookUrls[0];
   const discoverPrompts = config.prompts[notebookUrl]?.discover;
-  if (!Array.isArray(discoverPrompts) || discoverPrompts.length === 0) throw new Error("No discover prompts found in config.");
+  if (!Array.isArray(discoverPrompts) || discoverPrompts.length === 0)
+    throw new Error("No discover prompts found in config.");
 
   for (const [i, DISCOVER_PROMPT] of discoverPrompts.entries()) {
-    console.log(`\n🔁 [${i+1}/${discoverPrompts.length}] Running discover prompt: ${DISCOVER_PROMPT}`);
+    console.log(
+      `\n🔁 [${i + 1}/${discoverPrompts.length}] Running discover prompt: ${DISCOVER_PROMPT}`,
+    );
     // ...existing code...
     console.log("🛠️ Running in mode: debug3");
     console.log("🔁 Launching Chrome...");
@@ -164,7 +167,9 @@ async function run() {
               if (text && text.includes("submit")) {
                 await btn.click();
                 clicked = true;
-                console.log("✅ Clicked Submit button in Discover sources modal");
+                console.log(
+                  "✅ Clicked Submit button in Discover sources modal",
+                );
                 break;
               }
             }
@@ -214,7 +219,9 @@ async function run() {
 
     // Done with this prompt
     await browser.disconnect();
-    console.log(`🎉 Discover prompt [${i+1}] complete. Waiting 60 seconds before next if any...`);
+    console.log(
+      `🎉 Discover prompt [${i + 1}] complete. Waiting 60 seconds before next if any...`,
+    );
     if (i < discoverPrompts.length - 1) {
       await new Promise((r) => setTimeout(r, 60000));
     }

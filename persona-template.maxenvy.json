@@ -1,0 +1,11 @@
+{
+  "prompts": {
+    "https://notebooklm.google.com/notebook/EXAMPLE": {
+      "discover": [
+        "Prompt 1: Find recent AI job market videos.",
+        "Prompt 2: Discover new roles created by AI.",
+        "Prompt 3: Analyze AI-driven hiring trends."
+      ]
+    }
+  }
+}
