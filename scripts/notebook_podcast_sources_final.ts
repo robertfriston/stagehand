@@ -11,7 +11,7 @@ const INDEX_PATH = path.join(slotsDir, "index.json");
 const MAX_PODCASTS = 8;
 const NOTEBOOKLM_DOWNLOAD_AUDIO_SCRIPT = path.resolve(
   __dirname,
-  "notebooklm_download_audio.ts"
+  "notebooklm_download_audio.ts",
 );
 
 function randomItem<T>(arr: T[]): T {
@@ -20,14 +20,7 @@ function randomItem<T>(arr: T[]): T {
 
 function getDestDir(type: string, idx: number): string {
   // e.g., /Users/jobenvy/Documents/UTOPIA/media/hosts/1
-  return path.resolve(
-    __dirname,
-    "..",
-    "..",
-    "media",
-    type,
-    String(idx + 1)
-  );
+  return path.resolve(__dirname, "..", "..", "media", type, String(idx + 1));
 }
 
 async function main() {
@@ -67,19 +60,25 @@ async function main() {
         const destDir = getDestDir(type, hostIdx);
         if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
         const audioLength = "Default";
-        console.log(`\n🎙️ Generating podcast for: ${obj.title}\nPrompt: ${prompt}`);
+        console.log(
+          `\n🎙️ Generating podcast for: ${obj.title}\nPrompt: ${prompt}`,
+        );
         let audioPath = null;
         try {
           const command = `npx tsx "${NOTEBOOKLM_DOWNLOAD_AUDIO_SCRIPT}" "${prompt.replace(/"/g, '\\"')}" "${audioLength}" "${destDir}"`;
           console.log(`👟 Executing: ${command}`);
           const execOutput = execSync(command, { encoding: "utf-8" });
           const outputLines = execOutput.split("\n");
-          const pathLine = outputLines.find((line) => line.startsWith("FINAL_AUDIO_PATH:"));
+          const pathLine = outputLines.find((line) =>
+            line.startsWith("FINAL_AUDIO_PATH:"),
+          );
           if (pathLine) {
             audioPath = pathLine.substring("FINAL_AUDIO_PATH:".length).trim();
             console.log(`✅ Audio file path: ${audioPath}`);
           } else {
-            console.warn("⚠️ Could not find FINAL_AUDIO_PATH in child script output.");
+            console.warn(
+              "⚠️ Could not find FINAL_AUDIO_PATH in child script output.",
+            );
           }
         } catch (err) {
           if (err instanceof Error) {
@@ -96,7 +95,9 @@ async function main() {
           fs.writeFileSync(slotFile, JSON.stringify(slotArr, null, 2));
           // --- Update hosts.json ---
           const hostsJsonPath = path.join(destDir, "hosts.json");
-          let hostsJson: { files: Array<Record<string, unknown>> } = { files: [] };
+          let hostsJson: { files: Array<Record<string, unknown>> } = {
+            files: [],
+          };
           if (fs.existsSync(hostsJsonPath)) {
             try {
               hostsJson = JSON.parse(fs.readFileSync(hostsJsonPath, "utf-8"));
@@ -117,7 +118,9 @@ async function main() {
           fs.writeFileSync(hostsJsonPath, JSON.stringify(hostsJson, null, 2));
           fs.writeFileSync(hostsJsonPath, JSON.stringify(hostsJson, null, 2));
           hostIdx++;
-          console.log(`✅ Podcast generated and saved: ${audioPath} (slot: ${slotFile})`);
+          console.log(
+            `✅ Podcast generated and saved: ${audioPath} (slot: ${slotFile})`,
+          );
         }
       }
     }
