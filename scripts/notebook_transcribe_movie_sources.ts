@@ -65,7 +65,7 @@ async function run() {
 
     // Wait for the AI to respond
     console.log("⏳ Waiting 180 seconds for AI response...");
-    await new Promise((r) => setTimeout(r, 180000));
+    await new Promise((r) => setTimeout(r, 300000));
 
     // Scroll to bottom and click the Copy to clipboard button
     console.log(
