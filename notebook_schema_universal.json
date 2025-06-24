@@ -25,7 +25,7 @@
       "url": {
         "type": "string",
         "format": "uri",
-        "description": "The full YouTube video URL"
+        "description": "The full YouTube video URL (if available)"
       },
       "questions": {
         "type": "array",
@@ -36,29 +36,15 @@
         "minItems": 3,
         "maxItems": 5
       },
-      "commentClusterMatches": {
+      "comments": {
         "type": "array",
         "description": "Simulated livestream chat user IDs from a fictional prototype (e.g. User_Skeptic, User_CoderGuru) that share thematic alignment with this video",
         "items": {
           "type": "string"
         }
-      },
-      "jobBubbleMatches": {
-        "type": "array",
-        "description": "Simulated job posting titles from a fictional job platform (e.g. 'AI Trust & Safety Auditor') that are topically related to this video",
-        "items": {
-          "type": "string"
-        }
-      },
-      "candidateEchoes": {
-        "type": "array",
-        "description": "Simulated candidate names from a fictional job-seeking prototype (e.g. 'Mark Ramirez') whose responses conceptually resonate with this video's themes",
-        "items": {
-          "type": "string"
-        }
       }
     },
-    "required": ["title", "description", "summary", "channel", "url", "questions"],
+    "required": ["title", "description", "summary", "channel", "url", "questions","comments"],
     "additionalProperties": false
   }
 }
