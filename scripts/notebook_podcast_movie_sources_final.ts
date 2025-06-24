@@ -54,8 +54,8 @@ async function main() {
         const question = randomItem(obj.questions);
         // Prefix prompt with all required metadata
         const prompt = `TITLE: ${obj.title}\nCHANNEL: ${obj.channel}\nURL: ${obj.url}\nQUESTION: ${question}`;
-        // Use hosts as default, or podcasts if you want to alternate
-        const type = "hosts";
+        // Use movies as default for the MOVIES workflow
+        const type = "movies";
         const destDir = getDestDir(type, hostIdx);
         if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
         const audioLength = "Default";
