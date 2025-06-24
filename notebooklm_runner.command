@@ -18,6 +18,14 @@
 # - **9) MOVIES**: Full workflow for movies. (`scripts/notebook_discover_movie_sources.ts`, `scripts/notebook_transcribe_movie_sources.ts`, `scripts/notebook_podcast_movie_sources_final.ts`)
 # - **10) INDEPTH**: Full workflow for InDepth sources. (`scripts/notebook_discover_indepth_sources.ts`, `scripts/notebook_transcribe_indepth_sources.ts`, `scripts/notebook_podcast_indepth_sources_final.ts`)
 # - **0) Exit**: Exits the script.
+#
+# ## How Persona JSON and NotebookLM URL Selection Works
+#
+# - Each workflow (HOSTS, MOVIES, INDEPTH) is mapped to a specific persona JSON file (e.g., MaxEnvy, Denny, JimJam).
+# - The persona JSON contains a `prompts` object. Each key in this object is a NotebookLM notebook URL.
+# - The runner script selects a random key (URL) from the `prompts` object for the chosen persona. (Currently, each persona has only one URL, but this is future-proofed for multiple URLs.)
+# - The selected NotebookLM URL is exported as an environment variable (`NOTEBOOK_URL`) and used by the workflow scripts.
+# - This ensures each workflow uses the correct persona and notebook context for all automation steps.
 # ---
 
 
@@ -29,11 +37,11 @@ OTHER_ARG=""
 
 for arg in "$@"; do
   case $arg in
-	mode=*)
-	  ;;
-	other=*)
-	  ;;
-	# Add more arguments here as needed
+  mode=*)
+    ;;
+  other=*)
+    ;;
+  # Add more arguments here as needed
   esac
 done
 
@@ -52,8 +60,8 @@ if [[ -z "$MODE" ]]; then
   echo "10) INDEPTH - FULL WORKFLOW FOR INDEPTH SOURCES"
   echo "0) Exit"
   while true; do
-	read -p "#? " mode_choice
-	case $mode_choice in
+  read -p "#? " mode_choice
+  case $mode_choice in
     1) MODE="debug1"; break ;;
     2) MODE="debug2"; break ;;
     3) MODE="debug3"; break ;;
@@ -66,7 +74,7 @@ if [[ -z "$MODE" ]]; then
     10) MODE="indepth"; break ;;
     0) exit 0 ;;
     *) echo "Invalid option";;
-	esac
+  esac
   done
 fi
 
@@ -103,12 +111,12 @@ if [[ "$MODE" != "headless" ]]; then
   sleep 3
   osascript <<EOF
 tell application "Google Chrome"
-	if not (exists window 1) then make new window
-	tell window 1
-		set URL of active tab to "http://127.0.0.1:8080/admin/adminDashboard"
-		make new tab with properties {URL:"$NOTEBOOK_URL"}
-	end tell
-	activate
+  if not (exists window 1) then make new window
+  tell window 1
+    set URL of active tab to "http://127.0.0.1:8080/admin/adminDashboard"
+    make new tab with properties {URL:"$NOTEBOOK_URL"}
+  end tell
+  activate
 end tell
 EOF
 fi
@@ -121,15 +129,15 @@ export PATH="$HOME/.nvm/versions/node/v20.15.0/bin:$PATH"
 
 case "$MODE" in
   debug1)
-	echo "[debug1] Running 'add youtube' workflow only..."
-	npx tsx "$ADD_YOUTUBE_SCRIPT"
-	echo "[Process completed]"; exit 0
-	;;
+  echo "[debug1] Running 'add youtube' workflow only..."
+  npx tsx "$ADD_YOUTUBE_SCRIPT"
+  echo "[Process completed]"; exit 0
+  ;;
   debug2)
-	echo "[debug2] Running 'download audio' workflow only..."
-	npx tsx "$SCRIPT"
-	echo "[Process completed]"; exit 0
-	;;
+  echo "[debug2] Running 'download audio' workflow only..."
+  npx tsx "$SCRIPT"
+  echo "[Process completed]"; exit 0
+  ;;
   debug3)
     echo "🚀 Running Discover Sources script..."
     ts-node "$PROJECT_DIR/scripts/notebook_discover_sources.ts"
@@ -137,7 +145,7 @@ case "$MODE" in
     sleep 60
     echo "🚀 Running Transcribe Sources script..."
     ts-node "$PROJECT_DIR/scripts/notebook_transcribe_sources.ts"
-	;;
+  ;;
   debug4)
     NOTEBOOK_TRANSCRIBE_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_transcribe_sources.ts"
     echo "[debug4] Running 'transcribe sources' workflow only..."
@@ -148,12 +156,12 @@ case "$MODE" in
     echo "[normal] Running 'add youtube' then 'download audio' workflows..."
     npx tsx "$ADD_YOUTUBE_SCRIPT"
     npx tsx "$SCRIPT"
-	;;
+  ;;
   headless)
     echo "[headless] Running 'add youtube' then 'download audio' workflows..."
     npx tsx "$ADD_YOUTUBE_SCRIPT"
     npx tsx "$SCRIPT"
-	;;
+  ;;
   podcasts-from-transcribe)
     NOTEBOOK_PODCAST_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_podcast_sources_final.ts"
     echo "[podcasts-from-transcribe] Running podcast generation from transcribed sources (FINAL)..."
@@ -162,7 +170,7 @@ case "$MODE" in
     ;;
   hosts)
     PERSONA_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.maxenvy.json"
-    NOTEBOOK_URL=$(node -e "console.log(Object.keys(require('$PERSONA_JSON').prompts)[0])")
+    NOTEBOOK_URL=$(node -e "const keys=Object.keys(require('$PERSONA_JSON').prompts);console.log(keys[Math.floor(Math.random()*keys.length)])")
     echo "🚀 [HOSTS WORKFLOW] Running Discover Sources script (Step 3)..."
     ts-node "$PROJECT_DIR/scripts/notebook_discover_sources.ts"
     echo "✅ [HOSTS WORKFLOW] Discover finished. Waiting 60 seconds..."
@@ -178,7 +186,7 @@ case "$MODE" in
     ;;
   movies)
     PERSONA_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.denny.json"
-    NOTEBOOK_URL=$(node -e "console.log(Object.keys(require('$PERSONA_JSON').prompts)[0])")
+    NOTEBOOK_URL=$(node -e "const keys=Object.keys(require('$PERSONA_JSON').prompts);console.log(keys[Math.floor(Math.random()*keys.length)])")
     echo "🚀 [MOVIES WORKFLOW] Running Discover Movie Sources script..."
     ts-node "$PROJECT_DIR/scripts/notebook_discover_movie_sources.ts"
     echo "✅ [MOVIES WORKFLOW] Discover finished. Waiting 60 seconds..."
@@ -194,7 +202,7 @@ case "$MODE" in
     ;;
   indepth)
     PERSONA_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.jimjam.json"
-    NOTEBOOK_URL=$(node -e "console.log(Object.keys(require('$PERSONA_JSON').prompts)[0])")
+    NOTEBOOK_URL=$(node -e "const keys=Object.keys(require('$PERSONA_JSON').prompts);console.log(keys[Math.floor(Math.random()*keys.length)])")
     echo "🚀 [INDEPTH WORKFLOW] Running Discover InDepth Sources script..."
     ts-node "$PROJECT_DIR/scripts/notebook_discover_indepth_sources.ts"
     echo "✅ [INDEPTH WORKFLOW] Discover finished. Waiting 60 seconds..."
@@ -210,6 +218,6 @@ case "$MODE" in
     ;;
   *)
     echo "Invalid mode selected"
-	;;
+  ;;
 esac
 
