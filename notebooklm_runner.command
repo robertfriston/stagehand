@@ -16,6 +16,7 @@
 # - **7) podcasts-from-transcribe**: Generates final podcast audio from transcribed sources. (`scripts/notebook_podcast_sources_final.ts`)
 # - **8) HOSTS**: Full workflow combining discovery, transcription, and final podcast generation (3, 4, & 7). (`scripts/notebook_discover_sources.ts`, `scripts/notebook_transcribe_sources.ts`, `scripts/notebook_podcast_sources_final.ts`)
 # - **9) MOVIES**: Full workflow for movies. (`scripts/notebook_discover_movie_sources.ts`, `scripts/notebook_transcribe_movie_sources.ts`, `scripts/notebook_podcast_movie_sources_final.ts`)
+# - **10) INDEPTH**: Full workflow for InDepth sources. (`scripts/notebook_discover_indepth_sources.ts`, `scripts/notebook_transcribe_indepth_sources.ts`, `scripts/notebook_podcast_indepth_sources_final.ts`)
 # - **0) Exit**: Exits the script.
 # ---
 
@@ -48,6 +49,7 @@ if [[ -z "$MODE" ]]; then
   echo "7) podcasts-from-transcribe - GENERATE THE AUDIO PODCASTS FROM TRANSCRIBED SOURCES (FINAL)"
   echo "8) HOSTS - FULL WORKFLOW OF 3, 4, & 7"
   echo "9) MOVIES - FULL WORKFLOW"
+  echo "10) INDEPTH - FULL WORKFLOW FOR INDEPTH SOURCES"
   echo "0) Exit"
   while true; do
 	read -p "#? " mode_choice
@@ -61,6 +63,7 @@ if [[ -z "$MODE" ]]; then
     7) MODE="podcasts-from-transcribe"; break ;;
     8) MODE="hosts"; break ;;
     9) MODE="movies"; break ;;
+    10) MODE="indepth"; break ;;
     0) exit 0 ;;
     *) echo "Invalid option";;
 	esac
@@ -183,6 +186,22 @@ case "$MODE" in
     NOTEBOOK_PODCAST_MOVIE_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_podcast_movie_sources_final.ts"
     echo "🚀 [MOVIES WORKFLOW] Running movie podcast generation..."
     npx tsx "$NOTEBOOK_PODCAST_MOVIE_SOURCES_SCRIPT"
+    echo "[Process completed]"; exit 0
+    ;;
+  indepth)
+    PERSONA_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.indepth.json"
+    NOTEBOOK_URL=$(node -e "console.log(Object.keys(require('$PERSONA_JSON').prompts)[0])")
+    echo "🚀 [INDEPTH WORKFLOW] Running Discover InDepth Sources script..."
+    ts-node "$PROJECT_DIR/scripts/notebook_discover_indepth_sources.ts"
+    echo "✅ [INDEPTH WORKFLOW] Discover finished. Waiting 60 seconds..."
+    sleep 60
+    echo "🚀 [INDEPTH WORKFLOW] Running Transcribe InDepth Sources script..."
+    ts-node "$PROJECT_DIR/scripts/notebook_transcribe_indepth_sources.ts"
+    echo "✅ [INDEPTH WORKFLOW] Transcribe finished. Waiting 60 seconds..."
+    sleep 60
+    NOTEBOOK_PODCAST_INDEPTH_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_podcast_indepth_sources_final.ts"
+    echo "🚀 [INDEPTH WORKFLOW] Running indepth podcast generation..."
+    npx tsx "$NOTEBOOK_PODCAST_INDEPTH_SOURCES_SCRIPT"
     echo "[Process completed]"; exit 0
     ;;
   *)
