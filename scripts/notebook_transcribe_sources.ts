@@ -2,51 +2,9 @@ import puppeteer from "puppeteer-core";
 import fs from "fs";
 import path from "path";
 import { searchYouTube } from "../youtube-api";
+import schemaUniversal from "../notebook_schema_universal.json";
 
-const PROMPT = `From the current NotebookLM sources, return only those that are YouTube videos. For each one, extract and return a structured JSON object using the following schema. The response should be a JSON array, where each item corresponds to a separate YouTube video.
-
-Use this schema:
-
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "YouTubeVideoInsight",
-  "description": "Structured data for a YouTube video source",
-  "type": "object",
-  "properties": {
-    "title": {
-      "type": "string",
-      "description": "The title of the YouTube video"
-    },
-    "description": {
-      "type": "string",
-      "description": "The full description or transcript summary of the video"
-    },
-    "summary": {
-      "type": "string",
-      "description": "A concise summary of the main ideas or arguments presented"
-    },
-    "channel": {
-      "type": "string",
-      "description": "The name of the YouTube channel"
-    },
-    "url": {
-      "type": "string",
-      "format": "uri",
-      "description": "The full YouTube video URL"
-    },
-    "questions": {
-      "type": "array",
-      "description": "3–5 questions based on the video's content",
-      "items": {
-        "type": "string"
-      },
-      "minItems": 3,
-      "maxItems": 5
-    }
-  },
-  "required": ["title", "description", "summary", "channel", "url", "questions"],
-  "additionalProperties": false
-}`;
+const PROMPT = schemaUniversal.prompt.instruction;
 
 async function run() {
   console.log("🚀 Starting NotebookLM Transcribe Sources Workflow...");
