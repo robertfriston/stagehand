@@ -2,9 +2,8 @@ import puppeteer from "puppeteer-core";
 import fs from "fs";
 import path from "path";
 import { searchYouTube } from "../youtube-api";
-import schemaUniversal from "../notebook_schema_universal.json";
-
-const PROMPT = schemaUniversal.prompt.instruction;
+const schemaPath = path.join(__dirname, "../notebook_schema_universal.json");
+const PROMPT = fs.readFileSync(schemaPath, "utf-8");
 
 async function run() {
   console.log("🚀 Starting NotebookLM Transcribe Sources Workflow...");
