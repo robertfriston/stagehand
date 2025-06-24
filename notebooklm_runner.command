@@ -1,5 +1,23 @@
 #!/bin/bash
 
+# ---
+# # NotebookLM Runner
+#
+# This script automates various workflows for interacting with NotebookLM and generating podcasts.
+#
+# ## Modes:
+#
+# - **1) debug1**: Runs the 'add youtube' workflow only.
+# - **2) debug2**: Runs the 'download audio' workflow only.
+# - **3) debug3**: Discovers new sources and then transcribes them.
+# - **4) debug4**: Transcribes sources only.
+# - **5) normal**: Adds a YouTube source and then downloads the audio.
+# - **6) headless**: Same as 'normal', but runs Chrome in headless mode.
+# - **7) podcasts-from-transcribe**: Generates final podcast audio from transcribed sources.
+# - **8) HOSTS**: Full workflow combining discovery, transcription, and final podcast generation (3, 4, & 7).
+# - **9) Exit**: Exits the script.
+# ---
+
 
 trap 'echo; echo "Script interrupted. Exiting."; exit 130' INT
 # --- Argument parsing for mode and future args ---
@@ -27,6 +45,7 @@ if [[ -z "$MODE" ]]; then
   echo "5) normal - runs the add youtube then the download audio"
   echo "6) headless - same as normal, but headless Chrome"
   echo "7) podcasts-from-transcribe - GENERATE THE AUDIO PODCASTS FROM TRANSCRIBED SOURCES (FINAL)"
+  echo "8) HOSTS - FULL WORKFLOW OF 3, 4, & 7"
   echo "9) Exit"
   while true; do
 	read -p "#? " mode_choice
@@ -38,6 +57,7 @@ if [[ -z "$MODE" ]]; then
     5) MODE="normal"; break ;;
     6) MODE="headless"; break ;;
     7) MODE="podcasts-from-transcribe"; break ;;
+    8) MODE="hosts"; break ;;
     9) exit 0 ;;
     *) echo "Invalid option";;
 	esac
@@ -131,6 +151,20 @@ case "$MODE" in
   podcasts-from-transcribe)
     NOTEBOOK_PODCAST_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_podcast_sources_final.ts"
     echo "[podcasts-from-transcribe] Running podcast generation from transcribed sources (FINAL)..."
+    npx tsx "$NOTEBOOK_PODCAST_SOURCES_SCRIPT"
+    echo "[Process completed]"; exit 0
+    ;;
+  hosts)
+    echo "🚀 [HOSTS WORKFLOW] Running Discover Sources script (Step 3)..."
+    ts-node "$PROJECT_DIR/scripts/notebook_discover_sources.ts"
+    echo "✅ [HOSTS WORKFLOW] Discover finished. Waiting 60 seconds..."
+    sleep 60
+    echo "🚀 [HOSTS WORKFLOW] Running Transcribe Sources script (Step 4)..."
+    ts-node "$PROJECT_DIR/scripts/notebook_transcribe_sources.ts"
+    echo "✅ [HOSTS WORKFLOW] Transcribe finished. Waiting 60 seconds..."
+    sleep 60
+    NOTEBOOK_PODCAST_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_podcast_sources_final.ts"
+    echo "🚀 [HOSTS WORKFLOW] Running podcast generation (Step 7)..."
     npx tsx "$NOTEBOOK_PODCAST_SOURCES_SCRIPT"
     echo "[Process completed]"; exit 0
     ;;
