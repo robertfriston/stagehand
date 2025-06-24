@@ -16,7 +16,7 @@
 # - **7) podcasts-from-transcribe**: Generates final podcast audio from transcribed sources. (`scripts/notebook_podcast_sources_final.ts`)
 # - **8) HOSTS**: Full workflow combining discovery, transcription, and final podcast generation (3, 4, & 7). (`scripts/notebook_discover_sources.ts`, `scripts/notebook_transcribe_sources.ts`, `scripts/notebook_podcast_sources_final.ts`)
 # - **9) MOVIES**: Full workflow for movies. (`scripts/notebook_discover_movie_sources.ts`, `scripts/notebook_transcribe_movie_sources.ts`, `scripts/notebook_podcast_movie_sources_final.ts`)
-# - **10) Exit**: Exits the script.
+# - **0) Exit**: Exits the script.
 # ---
 
 
@@ -48,7 +48,7 @@ if [[ -z "$MODE" ]]; then
   echo "7) podcasts-from-transcribe - GENERATE THE AUDIO PODCASTS FROM TRANSCRIBED SOURCES (FINAL)"
   echo "8) HOSTS - FULL WORKFLOW OF 3, 4, & 7"
   echo "9) MOVIES - FULL WORKFLOW"
-  echo "10) Exit"
+  echo "0) Exit"
   while true; do
 	read -p "#? " mode_choice
 	case $mode_choice in
@@ -61,7 +61,7 @@ if [[ -z "$MODE" ]]; then
     7) MODE="podcasts-from-transcribe"; break ;;
     8) MODE="hosts"; break ;;
     9) MODE="movies"; break ;;
-    10) exit 0 ;;
+    0) exit 0 ;;
     *) echo "Invalid option";;
 	esac
   done
