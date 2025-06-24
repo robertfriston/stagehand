@@ -7,14 +7,14 @@
 #
 # ## Modes:
 #
-# - **1) debug1**: Runs the 'add youtube' workflow only.
-# - **2) debug2**: Runs the 'download audio' workflow only.
-# - **3) debug3**: Discovers new sources and then transcribes them.
-# - **4) debug4**: Transcribes sources only.
-# - **5) normal**: Adds a YouTube source and then downloads the audio.
-# - **6) headless**: Same as 'normal', but runs Chrome in headless mode.
-# - **7) podcasts-from-transcribe**: Generates final podcast audio from transcribed sources.
-# - **8) HOSTS**: Full workflow combining discovery, transcription, and final podcast generation (3, 4, & 7).
+# - **1) debug1**: Runs the 'add youtube' workflow only. (`scripts/notebooklm_add_youtube.ts`)
+# - **2) debug2**: Runs the 'download audio' workflow only. (`scripts/master_podcast_generator.ts`)
+# - **3) debug3**: Discovers new sources and then transcribes them. (`scripts/notebook_discover_sources.ts`, `scripts/notebook_transcribe_sources.ts`)
+# - **4) debug4**: Transcribes sources only. (`scripts/notebook_transcribe_sources.ts`)
+# - **5) normal**: Adds a YouTube source and then downloads the audio. (`scripts/notebooklm_add_youtube.ts`, `scripts/master_podcast_generator.ts`)
+# - **6) headless**: Same as 'normal', but runs Chrome in headless mode. (`scripts/notebooklm_add_youtube.ts`, `scripts/master_podcast_generator.ts`)
+# - **7) podcasts-from-transcribe**: Generates final podcast audio from transcribed sources. (`scripts/notebook_podcast_sources_final.ts`)
+# - **8) HOSTS**: Full workflow combining discovery, transcription, and final podcast generation (3, 4, & 7). (`scripts/notebook_discover_sources.ts`, `scripts/notebook_transcribe_sources.ts`, `scripts/notebook_podcast_sources_final.ts`)
 # - **9) Exit**: Exits the script.
 # ---
 
