@@ -187,6 +187,7 @@ case "$MODE" in
   movies)
     PERSONA_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.denny.json"
     NOTEBOOK_URL=$(node -e "const keys=Object.keys(require('$PERSONA_JSON').prompts);console.log(keys[Math.floor(Math.random()*keys.length)])")
+    export NOTEBOOK_URL
     echo "🚀 [MOVIES WORKFLOW] Running Discover Movie Sources script..."
     ts-node "$PROJECT_DIR/scripts/notebook_discover_movie_sources.ts"
     echo "✅ [MOVIES WORKFLOW] Discover finished. Waiting 60 seconds..."
@@ -203,6 +204,7 @@ case "$MODE" in
   indepth)
     PERSONA_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.jimjam.json"
     NOTEBOOK_URL=$(node -e "const keys=Object.keys(require('$PERSONA_JSON').prompts);console.log(keys[Math.floor(Math.random()*keys.length)])")
+    export NOTEBOOK_URL
     echo "🚀 [INDEPTH WORKFLOW] Running Discover InDepth Sources script..."
     ts-node "$PROJECT_DIR/scripts/notebook_discover_indepth_sources.ts"
     echo "✅ [INDEPTH WORKFLOW] Discover finished. Waiting 60 seconds..."
