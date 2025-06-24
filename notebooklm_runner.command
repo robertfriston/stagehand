@@ -91,38 +91,13 @@ PROJECT_DIR="$HOME/Documents/UTOPIA/stagehand"
 SCRIPT="$PROJECT_DIR/scripts/master_podcast_generator.ts"
 ADD_YOUTUBE_SCRIPT="$PROJECT_DIR/scripts/notebooklm_add_youtube.ts"
 
-# Dynamically extract the first NotebookLM URL from the persona config
-PERSONA_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.maxenvy.json"
-NOTEBOOK_URL=$(node -e "console.log(Object.keys(require('$PERSONA_JSON').prompts)[0])")
 
-# Set Chrome flags for headless if needed
-CHROME_FLAGS="--remote-debugging-port=9222 --user-data-dir=/tmp/stagehand-chrome-session --no-proxy-server --start-maximized"
-if [[ "$MODE" == "headless" ]]; then
-  CHROME_FLAGS="$CHROME_FLAGS --headless=new"
-fi
+# Persona JSON paths
+MAXENVY_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.maxenvy.json"
+DENNY_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.denny.json"
+JIMJAM_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.jimjam.json"
 
-echo "🔁 Launching Chrome..."
-pgrep -f "Chrome.*9222" > /dev/null || \
-"$CHROME" $CHROME_FLAGS &
 
-# Only open GUI tabs if not headless
-if [[ "$MODE" != "headless" ]]; then
-  echo "🌐 Opening Notebook..."
-  sleep 3
-  osascript <<EOF
-tell application "Google Chrome"
-  if not (exists window 1) then make new window
-  tell window 1
-    set URL of active tab to "http://127.0.0.1:8080/admin/adminDashboard"
-    make new tab with properties {URL:"$NOTEBOOK_URL"}
-  end tell
-  activate
-end tell
-EOF
-fi
-
-echo "⏳ Waiting for login..."
-sleep 10
 
 cd "$PROJECT_DIR"
 export PATH="$HOME/.nvm/versions/node/v20.15.0/bin:$PATH"
@@ -169,8 +144,33 @@ case "$MODE" in
     echo "[Process completed]"; exit 0
     ;;
   hosts)
-    PERSONA_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.maxenvy.json"
-    NOTEBOOK_URL=$(node -e "const keys=Object.keys(require('$PERSONA_JSON').prompts);console.log(keys[Math.floor(Math.random()*keys.length)])")
+    PERSONA_JSON="$MAXENVY_JSON"
+    NOTEBOOK_URL=$(node -e "console.log(Object.keys(require('$PERSONA_JSON').prompts)[0])")
+    export NOTEBOOK_URL
+    CHROME_FLAGS="--remote-debugging-port=9222 --user-data-dir=/tmp/stagehand-chrome-session --no-proxy-server --start-maximized"
+    if [[ "$MODE" == "headless" ]]; then
+      CHROME_FLAGS="$CHROME_FLAGS --headless=new"
+    fi
+    echo "🔁 Launching Chrome..."
+    pgrep -f "Chrome.*9222" > /dev/null || "$CHROME" $CHROME_FLAGS &
+    if [[ "$MODE" != "headless" ]]; then
+      echo "🌐 Opening Notebook..."
+      sleep 3
+      osascript <<EOF
+tell application "Google Chrome"
+  if not (exists window 1) then make new window
+  tell window 1
+    set URL of active tab to "http://127.0.0.1:8080/admin/adminDashboard"
+    make new tab with properties {URL:"$NOTEBOOK_URL"}
+  end tell
+  activate
+end tell
+EOF
+    fi
+    echo "⏳ Waiting for login..."
+    sleep 10
+    echo "DEBUG: [HOSTS] PERSONA_JSON=$PERSONA_JSON"
+    echo "DEBUG: [HOSTS] NOTEBOOK_URL=$NOTEBOOK_URL"
     echo "🚀 [HOSTS WORKFLOW] Running Discover Sources script (Step 3)..."
     ts-node "$PROJECT_DIR/scripts/notebook_discover_sources.ts"
     echo "✅ [HOSTS WORKFLOW] Discover finished. Waiting 60 seconds..."
@@ -185,11 +185,35 @@ case "$MODE" in
     echo "[Process completed]"; exit 0
     ;;
   movies)
-    PERSONA_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.denny.json"
-    NOTEBOOK_URL=$(node -e "const keys=Object.keys(require('$PERSONA_JSON').prompts);console.log(keys[Math.floor(Math.random()*keys.length)])")
+    PERSONA_JSON="$DENNY_JSON"
+    NOTEBOOK_URL=$(node -e "console.log(Object.keys(require('$PERSONA_JSON').prompts)[0])")
     export NOTEBOOK_URL
-    echo "🚀 [MOVIES WORKFLOW] Running Discover Movie Sources script..."
-    ts-node "$PROJECT_DIR/scripts/notebook_discover_movie_sources.ts"
+    CHROME_FLAGS="--remote-debugging-port=9222 --user-data-dir=/tmp/stagehand-chrome-session --no-proxy-server --start-maximized"
+    if [[ "$MODE" == "headless" ]]; then
+      CHROME_FLAGS="$CHROME_FLAGS --headless=new"
+    fi
+    echo "🔁 Launching Chrome..."
+    pgrep -f "Chrome.*9222" > /dev/null || "$CHROME" $CHROME_FLAGS &
+    if [[ "$MODE" != "headless" ]]; then
+      echo "🌐 Opening Notebook..."
+      sleep 3
+      osascript <<EOF
+tell application "Google Chrome"
+  if not (exists window 1) then make new window
+  tell window 1
+    set URL of active tab to "http://127.0.0.1:8080/admin/adminDashboard"
+    make new tab with properties {URL:"$NOTEBOOK_URL"}
+  end tell
+  activate
+end tell
+EOF
+    fi
+    echo "⏳ Waiting for login..."
+    sleep 10
+    echo "DEBUG: [MOVIES] PERSONA_JSON=$PERSONA_JSON"
+    echo "DEBUG: [MOVIES] NOTEBOOK_URL=$NOTEBOOK_URL"
+    echo "🚀 [MOVIES WORKFLOW] Running Discover Sources script..."
+    ts-node "$PROJECT_DIR/scripts/notebook_discover_sources.ts"
     echo "✅ [MOVIES WORKFLOW] Discover finished. Waiting 60 seconds..."
     sleep 60
     echo "🚀 [MOVIES WORKFLOW] Running Transcribe Movie Sources script..."
@@ -202,9 +226,33 @@ case "$MODE" in
     echo "[Process completed]"; exit 0
     ;;
   indepth)
-    PERSONA_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.jimjam.json"
-    NOTEBOOK_URL=$(node -e "const keys=Object.keys(require('$PERSONA_JSON').prompts);console.log(keys[Math.floor(Math.random()*keys.length)])")
+    PERSONA_JSON="$JIMJAM_JSON"
+    NOTEBOOK_URL=$(node -e "console.log(Object.keys(require('$PERSONA_JSON').prompts)[0])")
     export NOTEBOOK_URL
+    CHROME_FLAGS="--remote-debugging-port=9222 --user-data-dir=/tmp/stagehand-chrome-session --no-proxy-server --start-maximized"
+    if [[ "$MODE" == "headless" ]]; then
+      CHROME_FLAGS="$CHROME_FLAGS --headless=new"
+    fi
+    echo "🔁 Launching Chrome..."
+    pgrep -f "Chrome.*9222" > /dev/null || "$CHROME" $CHROME_FLAGS &
+    if [[ "$MODE" != "headless" ]]; then
+      echo "🌐 Opening Notebook..."
+      sleep 3
+      osascript <<EOF
+tell application "Google Chrome"
+  if not (exists window 1) then make new window
+  tell window 1
+    set URL of active tab to "http://127.0.0.1:8080/admin/adminDashboard"
+    make new tab with properties {URL:"$NOTEBOOK_URL"}
+  end tell
+  activate
+end tell
+EOF
+    fi
+    echo "⏳ Waiting for login..."
+    sleep 10
+    echo "DEBUG: [INDEPTH] PERSONA_JSON=$PERSONA_JSON"
+    echo "DEBUG: [INDEPTH] NOTEBOOK_URL=$NOTEBOOK_URL"
     echo "🚀 [INDEPTH WORKFLOW] Running Discover InDepth Sources script..."
     ts-node "$PROJECT_DIR/scripts/notebook_discover_indepth_sources.ts"
     echo "✅ [INDEPTH WORKFLOW] Discover finished. Waiting 60 seconds..."
