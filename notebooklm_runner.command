@@ -15,7 +15,8 @@
 # - **6) headless**: Same as 'normal', but runs Chrome in headless mode. (`scripts/notebooklm_add_youtube.ts`, `scripts/master_podcast_generator.ts`)
 # - **7) podcasts-from-transcribe**: Generates final podcast audio from transcribed sources. (`scripts/notebook_podcast_sources_final.ts`)
 # - **8) HOSTS**: Full workflow combining discovery, transcription, and final podcast generation (3, 4, & 7). (`scripts/notebook_discover_sources.ts`, `scripts/notebook_transcribe_sources.ts`, `scripts/notebook_podcast_sources_final.ts`)
-# - **9) Exit**: Exits the script.
+# - **9) MOVIES**: Full workflow for movies. (`scripts/notebook_discover_movie_sources.ts`, `scripts/notebook_transcribe_movie_sources.ts`, `scripts/notebook_podcast_movie_sources_final.ts`)
+# - **10) Exit**: Exits the script.
 # ---
 
 
@@ -46,7 +47,8 @@ if [[ -z "$MODE" ]]; then
   echo "6) headless - same as normal, but headless Chrome"
   echo "7) podcasts-from-transcribe - GENERATE THE AUDIO PODCASTS FROM TRANSCRIBED SOURCES (FINAL)"
   echo "8) HOSTS - FULL WORKFLOW OF 3, 4, & 7"
-  echo "9) Exit"
+  echo "9) MOVIES - FULL WORKFLOW"
+  echo "10) Exit"
   while true; do
 	read -p "#? " mode_choice
 	case $mode_choice in
@@ -58,7 +60,8 @@ if [[ -z "$MODE" ]]; then
     6) MODE="headless"; break ;;
     7) MODE="podcasts-from-transcribe"; break ;;
     8) MODE="hosts"; break ;;
-    9) exit 0 ;;
+    9) MODE="movies"; break ;;
+    10) exit 0 ;;
     *) echo "Invalid option";;
 	esac
   done
@@ -166,6 +169,20 @@ case "$MODE" in
     NOTEBOOK_PODCAST_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_podcast_sources_final.ts"
     echo "🚀 [HOSTS WORKFLOW] Running podcast generation (Step 7)..."
     npx tsx "$NOTEBOOK_PODCAST_SOURCES_SCRIPT"
+    echo "[Process completed]"; exit 0
+    ;;
+  movies)
+    echo "🚀 [MOVIES WORKFLOW] Running Discover Movie Sources script..."
+    ts-node "$PROJECT_DIR/scripts/notebook_discover_movie_sources.ts"
+    echo "✅ [MOVIES WORKFLOW] Discover finished. Waiting 60 seconds..."
+    sleep 60
+    echo "🚀 [MOVIES WORKFLOW] Running Transcribe Movie Sources script..."
+    ts-node "$PROJECT_DIR/scripts/notebook_transcribe_movie_sources.ts"
+    echo "✅ [MOVIES WORKFLOW] Transcribe finished. Waiting 60 seconds..."
+    sleep 60
+    NOTEBOOK_PODCAST_MOVIE_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_podcast_movie_sources_final.ts"
+    echo "🚀 [MOVIES WORKFLOW] Running movie podcast generation..."
+    npx tsx "$NOTEBOOK_PODCAST_MOVIE_SOURCES_SCRIPT"
     echo "[Process completed]"; exit 0
     ;;
   *)
