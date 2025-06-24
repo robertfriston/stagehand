@@ -16,7 +16,7 @@ async function run() {
   if (!Array.isArray(discoverPrompts) || discoverPrompts.length === 0)
     throw new Error("No discover prompts found in config.");
   if (config.last_updated) {
-    console.log('DEBUG: Persona last_updated:', config.last_updated);
+    console.log("DEBUG: Persona last_updated:", config.last_updated);
   }
 
   for (const [i, DISCOVER_PROMPT] of discoverPrompts.entries()) {

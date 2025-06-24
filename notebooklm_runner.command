@@ -228,6 +228,7 @@ EOF
     ;;
   indepth)
     PERSONA_JSON="$JIMJAM_JSON"
+    export PERSONA_JSON
     NOTEBOOK_URL=$(node -e "const fs = require('fs'); const persona = JSON.parse(fs.readFileSync(process.env.PERSONA_JSON || '$JIMJAM_JSON', 'utf8')); console.log(Object.keys(persona.prompts)[0])")
     export NOTEBOOK_URL
     CHROME_FLAGS="--remote-debugging-port=9222 --user-data-dir=/tmp/stagehand-chrome-session --no-proxy-server --start-maximized"
