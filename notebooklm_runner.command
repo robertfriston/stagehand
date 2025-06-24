@@ -19,14 +19,14 @@ done
 
 # If no mode is set, prompt the user interactively
 if [[ -z "$MODE" ]]; then
-  echo "What mode?:"
+  echo "What mode?: RUN (3) FOLLOWED BY (7) FOR NORMAL USE"
   echo "1) debug1 - runs the 'add youtube' workflow only"
   echo "2) debug2 - runs the 'download audio' workflow only"
-  echo "3) debug3 - RUNS THE NEW DISCOVER FOLLWED BY TRANSCRIBE WORKFLOWS"
-  echo "4) Transcribe Latest Imported Sources (run after discover)"
+  echo "3) debug3 - RUNS THE NEW DISCOVER FOLLWED BY (4) TRANSCRIBE WORKFLOWS"
+  echo "4) debug4 - TRANSCRIBE WORKFLOWS ONLY"
   echo "5) normal - runs the add youtube then the download audio"
   echo "6) headless - same as normal, but headless Chrome"
-  echo "7) podcasts-from-transcribe - generate podcasts from transcribed sources (FINAL)"
+  echo "7) podcasts-from-transcribe - GENERATE THE AUDIO PODCASTS FROM TRANSCRIBED SOURCES (FINAL)"
   echo "9) Exit"
   while true; do
 	read -p "#? " mode_choice

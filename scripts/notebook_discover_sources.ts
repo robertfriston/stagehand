@@ -1,6 +1,5 @@
 import puppeteer from "puppeteer-core";
 import fs from "fs";
-import path from "path";
 
 async function run() {
   // Load persona config and extract discover prompts
