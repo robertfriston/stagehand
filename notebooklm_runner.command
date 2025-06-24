@@ -161,6 +161,8 @@ case "$MODE" in
     echo "[Process completed]"; exit 0
     ;;
   hosts)
+    PERSONA_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.maxenvy.json"
+    NOTEBOOK_URL=$(node -e "console.log(Object.keys(require('$PERSONA_JSON').prompts)[0])")
     echo "🚀 [HOSTS WORKFLOW] Running Discover Sources script (Step 3)..."
     ts-node "$PROJECT_DIR/scripts/notebook_discover_sources.ts"
     echo "✅ [HOSTS WORKFLOW] Discover finished. Waiting 60 seconds..."
@@ -175,6 +177,8 @@ case "$MODE" in
     echo "[Process completed]"; exit 0
     ;;
   movies)
+    PERSONA_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.denny.json"
+    NOTEBOOK_URL=$(node -e "console.log(Object.keys(require('$PERSONA_JSON').prompts)[0])")
     echo "🚀 [MOVIES WORKFLOW] Running Discover Movie Sources script..."
     ts-node "$PROJECT_DIR/scripts/notebook_discover_movie_sources.ts"
     echo "✅ [MOVIES WORKFLOW] Discover finished. Waiting 60 seconds..."
@@ -189,7 +193,7 @@ case "$MODE" in
     echo "[Process completed]"; exit 0
     ;;
   indepth)
-    PERSONA_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.indepth.json"
+    PERSONA_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.jimjam.json"
     NOTEBOOK_URL=$(node -e "console.log(Object.keys(require('$PERSONA_JSON').prompts)[0])")
     echo "🚀 [INDEPTH WORKFLOW] Running Discover InDepth Sources script..."
     ts-node "$PROJECT_DIR/scripts/notebook_discover_indepth_sources.ts"
