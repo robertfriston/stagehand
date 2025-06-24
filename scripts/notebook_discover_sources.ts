@@ -3,9 +3,10 @@ import fs from "fs";
 
 async function run() {
   // Load persona config and extract discover prompts
-  const configPath =
-    "/Users/jobenvy/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.maxenvy.json";
-  const configRaw = fs.readFileSync(configPath, "utf-8");
+  const personaPath = process.env.PERSONA_JSON;
+  if (!personaPath) throw new Error("PERSONA_JSON env var not set");
+  console.log("DEBUG: Loading persona config from", personaPath);
+  const configRaw = fs.readFileSync(personaPath, "utf-8");
   const config = JSON.parse(configRaw);
   const notebookUrls = Object.keys(config.prompts);
   if (notebookUrls.length === 0)
@@ -14,6 +15,10 @@ async function run() {
   const discoverPrompts = config.prompts[notebookUrl]?.discover;
   if (!Array.isArray(discoverPrompts) || discoverPrompts.length === 0)
     throw new Error("No discover prompts found in config.");
+  // Print a unique marker from the persona file for debug
+  if (config.last_updated) {
+    console.log("DEBUG: Persona last_updated:", config.last_updated);
+  }
 
   for (const [i, DISCOVER_PROMPT] of discoverPrompts.entries()) {
     console.log(

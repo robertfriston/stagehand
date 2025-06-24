@@ -145,7 +145,7 @@ case "$MODE" in
     ;;
   hosts)
     PERSONA_JSON="$MAXENVY_JSON"
-    NOTEBOOK_URL=$(node -e "console.log(Object.keys(require('$PERSONA_JSON').prompts)[0])")
+    NOTEBOOK_URL=$(node -e "const fs = require('fs'); const persona = JSON.parse(fs.readFileSync(process.env.PERSONA_JSON || '$MAXENVY_JSON', 'utf8')); console.log(Object.keys(persona.prompts)[0])")
     export NOTEBOOK_URL
     CHROME_FLAGS="--remote-debugging-port=9222 --user-data-dir=/tmp/stagehand-chrome-session --no-proxy-server --start-maximized"
     if [[ "$MODE" == "headless" ]]; then
@@ -186,7 +186,8 @@ EOF
     ;;
   movies)
     PERSONA_JSON="$DENNY_JSON"
-    NOTEBOOK_URL=$(node -e "console.log(Object.keys(require('$PERSONA_JSON').prompts)[0])")
+    export PERSONA_JSON
+    NOTEBOOK_URL=$(node -e "const fs = require('fs'); const persona = JSON.parse(fs.readFileSync(process.env.PERSONA_JSON || '$DENNY_JSON', 'utf8')); console.log(Object.keys(persona.prompts)[0])")
     export NOTEBOOK_URL
     CHROME_FLAGS="--remote-debugging-port=9222 --user-data-dir=/tmp/stagehand-chrome-session --no-proxy-server --start-maximized"
     if [[ "$MODE" == "headless" ]]; then
@@ -227,7 +228,7 @@ EOF
     ;;
   indepth)
     PERSONA_JSON="$JIMJAM_JSON"
-    NOTEBOOK_URL=$(node -e "console.log(Object.keys(require('$PERSONA_JSON').prompts)[0])")
+    NOTEBOOK_URL=$(node -e "const fs = require('fs'); const persona = JSON.parse(fs.readFileSync(process.env.PERSONA_JSON || '$JIMJAM_JSON', 'utf8')); console.log(Object.keys(persona.prompts)[0])")
     export NOTEBOOK_URL
     CHROME_FLAGS="--remote-debugging-port=9222 --user-data-dir=/tmp/stagehand-chrome-session --no-proxy-server --start-maximized"
     if [[ "$MODE" == "headless" ]]; then
