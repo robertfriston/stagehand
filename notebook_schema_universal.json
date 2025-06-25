@@ -1,10 +1,13 @@
 {
-  "prompt": {
-    "instruction": "From the current NotebookLM sources, return only those that are YouTube videos. For each one, extract and return a structured JSON object using the following schema. The response should be a JSON array, where each item corresponds to a separate YouTube video.",
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "YouTubeVideoInsightArray",
+  "type": "array",
+  "description": "An array of up to 5 YouTube video insights",
+  "maxItems": 5,
+  "items": {
+    "type": "object",
     "title": "YouTubeVideoInsight",
     "description": "Structured data for a YouTube video source",
-    "type": "object",
     "properties": {
       "title": {
         "type": "string",
@@ -44,7 +47,7 @@
         }
       }
     },
-    "required": ["title", "description", "summary", "channel", "url", "questions","comments"],
+    "required": ["title", "description", "summary", "channel", "url", "questions", "comments"],
     "additionalProperties": false
   }
 }
