@@ -2,6 +2,7 @@ import puppeteer from "puppeteer-core";
 import fs from "fs";
 import path from "path";
 import { searchYouTube } from "../youtube-api";
+import { extractAndParseJsonFromClipboard } from "./jsonExtractor";
 const schemaPath = path.join(__dirname, "../notebook_schema_universal.json");
 const PROMPT = fs.readFileSync(schemaPath, "utf-8");
 
@@ -101,32 +102,8 @@ async function run() {
         break;
       }
     }
-    console.log("📋 Reading clipboard content from browser clipboard...");
-    // Read raw clipboard content
-    const clipboardContent = await notebookPage.evaluate(() => {
-      return navigator.clipboard.readText();
-    });
-    console.log("🛠️ Debug: raw clipboard content:\n", clipboardContent);
-    // Extract JSON array from any surrounding text
-    let jsonString = clipboardContent;
-    const firstBracket = jsonString.indexOf("[");
-    const lastBracket = jsonString.lastIndexOf("]");
-    if (
-      firstBracket !== -1 &&
-      lastBracket !== -1 &&
-      lastBracket > firstBracket
-    ) {
-      jsonString = jsonString.substring(firstBracket, lastBracket + 1);
-    }
-    jsonString = jsonString.trim();
-    console.log("🛠️ Debug: extracted JSON string:\n", jsonString);
-    let parsed;
-    try {
-      parsed = JSON.parse(jsonString);
-    } catch (e) {
-      console.error("❌ Failed to parse extracted JSON string as JSON:", e);
-      return;
-    }
+    const parsed = await extractAndParseJsonFromClipboard(notebookPage);
+    if (!parsed) return;
     // Fill missing URLs and channels using YouTube API
     console.log(
       "🔍 Enriching sources with YouTube API lookup for missing URLs...",
