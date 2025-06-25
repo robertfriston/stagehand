@@ -26,6 +26,24 @@ export async function extractAndParseJsonFromClipboard(
     jsonString = jsonString.substring(firstBracket, lastBracket + 1);
   }
   jsonString = jsonString.trim();
+
+  // Remove trailing commas before closing brackets (common JSON copy error)
+  jsonString = jsonString.replace(/,\s*([\]}])/g, "$1");
+
+  // Attempt to auto-close missing bracket if array/object is unterminated
+  if (
+    (jsonString.match(/\[/g) || []).length >
+    (jsonString.match(/\]/g) || []).length
+  ) {
+    jsonString += "]";
+  }
+  if (
+    (jsonString.match(/\{/g) || []).length >
+    (jsonString.match(/\}/g) || []).length
+  ) {
+    jsonString += "}";
+  }
+
   console.log("🛠️ Debug: extracted JSON string:\n", jsonString);
   try {
     return JSON.parse(jsonString);
