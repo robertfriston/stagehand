@@ -55,9 +55,18 @@ if [[ -z "$MODE" ]]; then
   echo "5) normal - runs the add youtube then the download audio"
   echo "6) headless - same as normal, but headless Chrome"
   echo "7) podcasts-from-transcribe - GENERATE THE AUDIO PODCASTS FROM TRANSCRIBED SOURCES (FINAL)"
-  echo "8) HOSTS - FULL WORKFLOW OF 3, 4, & 7"
-  echo "9) MOVIES - FULL WORKFLOW"
-  echo "10) INDEPTH - FULL WORKFLOW FOR INDEPTH SOURCES"
+  echo "8) HOSTS - FULL WORKFLOW OF 3, 4, & 7 (discover, transcribe, podcast)"
+  echo "  8.1) HOSTS - Discover only"
+  echo "  8.2) HOSTS - Transcribe only"
+  echo "  8.3) HOSTS - Podcast only"
+  echo "9) MOVIES - FULL WORKFLOW (discover, transcribe, podcast)"
+  echo "  9.1) MOVIES - Discover only"
+  echo "  9.2) MOVIES - Transcribe only"
+  echo "  9.3) MOVIES - Podcast only"
+  echo "10) INDEPTH - FULL WORKFLOW FOR INDEPTH SOURCES (discover, transcribe, podcast)"
+  echo "  10.1) INDEPTH - Discover only"
+  echo "  10.2) INDEPTH - Transcribe only"
+  echo "  10.3) INDEPTH - Podcast only"
   echo "0) Exit"
   while true; do
   read -p "#? " mode_choice
@@ -70,8 +79,17 @@ if [[ -z "$MODE" ]]; then
     6) MODE="headless"; break ;;
     7) MODE="podcasts-from-transcribe"; break ;;
     8) MODE="hosts"; break ;;
+    8.1) MODE="hosts-discover"; break ;;
+    8.2) MODE="hosts-transcribe"; break ;;
+    8.3) MODE="hosts-podcast"; break ;;
     9) MODE="movies"; break ;;
+    9.1) MODE="movies-discover"; break ;;
+    9.2) MODE="movies-transcribe"; break ;;
+    9.3) MODE="movies-podcast"; break ;;
     10) MODE="indepth"; break ;;
+    10.1) MODE="indepth-discover"; break ;;
+    10.2) MODE="indepth-transcribe"; break ;;
+    10.3) MODE="indepth-podcast"; break ;;
     0) exit 0 ;;
     *) echo "Invalid option";;
   esac
@@ -143,8 +161,9 @@ case "$MODE" in
     npx tsx "$NOTEBOOK_PODCAST_SOURCES_SCRIPT"
     echo "[Process completed]"; exit 0
     ;;
-  hosts)
+  hosts|hosts-discover|hosts-transcribe|hosts-podcast)
     PERSONA_JSON="$MAXENVY_JSON"
+    export PERSONA_JSON
     NOTEBOOK_URL=$(node -e "const fs = require('fs'); const persona = JSON.parse(fs.readFileSync(process.env.PERSONA_JSON || '$MAXENVY_JSON', 'utf8')); console.log(Object.keys(persona.prompts)[0])")
     export NOTEBOOK_URL
     CHROME_FLAGS="--remote-debugging-port=9222 --user-data-dir=/tmp/stagehand-chrome-session --no-proxy-server --start-maximized"
@@ -171,20 +190,28 @@ EOF
     sleep 10
     echo "DEBUG: [HOSTS] PERSONA_JSON=$PERSONA_JSON"
     echo "DEBUG: [HOSTS] NOTEBOOK_URL=$NOTEBOOK_URL"
-    echo "🚀 [HOSTS WORKFLOW] Running Discover Sources script (Step 3)..."
-    ts-node "$PROJECT_DIR/scripts/notebook_discover_sources.ts"
-    echo "✅ [HOSTS WORKFLOW] Discover finished. Waiting 60 seconds..."
-    sleep 60
-    echo "🚀 [HOSTS WORKFLOW] Running Transcribe Sources script (Step 4)..."
-    ts-node "$PROJECT_DIR/scripts/notebook_transcribe_sources.ts"
-    echo "✅ [HOSTS WORKFLOW] Transcribe finished. Waiting 60 seconds..."
-    sleep 60
-    NOTEBOOK_PODCAST_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_podcast_sources_final.ts"
-    echo "🚀 [HOSTS WORKFLOW] Running podcast generation (Step 7)..."
-    npx tsx "$NOTEBOOK_PODCAST_SOURCES_SCRIPT"
-    echo "[Process completed]"; exit 0
+    if [[ "$MODE" == "hosts" || "$MODE" == "hosts-discover" ]]; then
+      echo "🚀 [HOSTS WORKFLOW] Running Discover Sources script (Step 3)..."
+      ts-node "$PROJECT_DIR/scripts/notebook_discover_sources.ts"
+      if [[ "$MODE" == "hosts-discover" ]]; then echo "[Process completed]"; exit 0; fi
+      echo "✅ [HOSTS WORKFLOW] Discover finished. Waiting 60 seconds..."
+      sleep 60
+    fi
+    if [[ "$MODE" == "hosts" || "$MODE" == "hosts-transcribe" ]]; then
+      echo "🚀 [HOSTS WORKFLOW] Running Transcribe Sources script (Step 4)..."
+      ts-node "$PROJECT_DIR/scripts/notebook_transcribe_sources.ts"
+      if [[ "$MODE" == "hosts-transcribe" ]]; then echo "[Process completed]"; exit 0; fi
+      echo "✅ [HOSTS WORKFLOW] Transcribe finished. Waiting 60 seconds..."
+      sleep 60
+    fi
+    if [[ "$MODE" == "hosts" || "$MODE" == "hosts-podcast" ]]; then
+      NOTEBOOK_PODCAST_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_podcast_sources_final.ts"
+      echo "🚀 [HOSTS WORKFLOW] Running podcast generation (Step 7)..."
+      npx tsx "$NOTEBOOK_PODCAST_SOURCES_SCRIPT"
+      echo "[Process completed]"; exit 0
+    fi
     ;;
-  movies)
+  movies|movies-discover|movies-transcribe|movies-podcast)
     PERSONA_JSON="$DENNY_JSON"
     export PERSONA_JSON
     NOTEBOOK_URL=$(node -e "const fs = require('fs'); const persona = JSON.parse(fs.readFileSync(process.env.PERSONA_JSON || '$DENNY_JSON', 'utf8')); console.log(Object.keys(persona.prompts)[0])")
@@ -213,20 +240,28 @@ EOF
     sleep 10
     echo "DEBUG: [MOVIES] PERSONA_JSON=$PERSONA_JSON"
     echo "DEBUG: [MOVIES] NOTEBOOK_URL=$NOTEBOOK_URL"
-    echo "🚀 [MOVIES WORKFLOW] Running Discover Sources script..."
-    ts-node "$PROJECT_DIR/scripts/notebook_discover_sources.ts"
-    echo "✅ [MOVIES WORKFLOW] Discover finished. Waiting 60 seconds..."
-    sleep 60
-    echo "🚀 [MOVIES WORKFLOW] Running Transcribe Movie Sources script..."
-    ts-node "$PROJECT_DIR/scripts/notebook_transcribe_movie_sources.ts"
-    echo "✅ [MOVIES WORKFLOW] Transcribe finished. Waiting 60 seconds..."
-    sleep 60
-    NOTEBOOK_PODCAST_MOVIE_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_podcast_movie_sources_final.ts"
-    echo "🚀 [MOVIES WORKFLOW] Running movie podcast generation..."
-    npx tsx "$NOTEBOOK_PODCAST_MOVIE_SOURCES_SCRIPT"
-    echo "[Process completed]"; exit 0
+    if [[ "$MODE" == "movies" || "$MODE" == "movies-discover" ]]; then
+      echo "🚀 [MOVIES WORKFLOW] Running Discover Movie Sources script..."
+      ts-node "$PROJECT_DIR/scripts/notebook_discover_movie_sources.ts"
+      if [[ "$MODE" == "movies-discover" ]]; then echo "[Process completed]"; exit 0; fi
+      echo "✅ [MOVIES WORKFLOW] Discover finished. Waiting 60 seconds..."
+      sleep 60
+    fi
+    if [[ "$MODE" == "movies" || "$MODE" == "movies-transcribe" ]]; then
+      echo "🚀 [MOVIES WORKFLOW] Running Transcribe Movie Sources script..."
+      ts-node "$PROJECT_DIR/scripts/notebook_transcribe_movie_sources.ts"
+      if [[ "$MODE" == "movies-transcribe" ]]; then echo "[Process completed]"; exit 0; fi
+      echo "✅ [MOVIES WORKFLOW] Transcribe finished. Waiting 60 seconds..."
+      sleep 60
+    fi
+    if [[ "$MODE" == "movies" || "$MODE" == "movies-podcast" ]]; then
+      NOTEBOOK_PODCAST_MOVIE_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_podcast_movie_sources_final.ts"
+      echo "🚀 [MOVIES WORKFLOW] Running movie podcast generation..."
+      npx tsx "$NOTEBOOK_PODCAST_MOVIE_SOURCES_SCRIPT"
+      echo "[Process completed]"; exit 0
+    fi
     ;;
-  indepth)
+  indepth|indepth-discover|indepth-transcribe|indepth-podcast)
     PERSONA_JSON="$JIMJAM_JSON"
     export PERSONA_JSON
     NOTEBOOK_URL=$(node -e "const fs = require('fs'); const persona = JSON.parse(fs.readFileSync(process.env.PERSONA_JSON || '$JIMJAM_JSON', 'utf8')); console.log(Object.keys(persona.prompts)[0])")
@@ -255,18 +290,26 @@ EOF
     sleep 10
     echo "DEBUG: [INDEPTH] PERSONA_JSON=$PERSONA_JSON"
     echo "DEBUG: [INDEPTH] NOTEBOOK_URL=$NOTEBOOK_URL"
-    echo "🚀 [INDEPTH WORKFLOW] Running Discover InDepth Sources script..."
-    ts-node "$PROJECT_DIR/scripts/notebook_discover_indepth_sources.ts"
-    echo "✅ [INDEPTH WORKFLOW] Discover finished. Waiting 60 seconds..."
-    sleep 60
-    echo "🚀 [INDEPTH WORKFLOW] Running Transcribe InDepth Sources script..."
-    ts-node "$PROJECT_DIR/scripts/notebook_transcribe_indepth_sources.ts"
-    echo "✅ [INDEPTH WORKFLOW] Transcribe finished. Waiting 60 seconds..."
-    sleep 60
-    NOTEBOOK_PODCAST_INDEPTH_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_podcast_indepth_sources_final.ts"
-    echo "🚀 [INDEPTH WORKFLOW] Running indepth podcast generation..."
-    npx tsx "$NOTEBOOK_PODCAST_INDEPTH_SOURCES_SCRIPT"
-    echo "[Process completed]"; exit 0
+    if [[ "$MODE" == "indepth" || "$MODE" == "indepth-discover" ]]; then
+      echo "🚀 [INDEPTH WORKFLOW] Running Discover InDepth Sources script..."
+      ts-node "$PROJECT_DIR/scripts/notebook_discover_indepth_sources.ts"
+      if [[ "$MODE" == "indepth-discover" ]]; then echo "[Process completed]"; exit 0; fi
+      echo "✅ [INDEPTH WORKFLOW] Discover finished. Waiting 60 seconds..."
+      sleep 60
+    fi
+    if [[ "$MODE" == "indepth" || "$MODE" == "indepth-transcribe" ]]; then
+      echo "🚀 [INDEPTH WORKFLOW] Running Transcribe InDepth Sources script..."
+      ts-node "$PROJECT_DIR/scripts/notebook_transcribe_indepth_sources.ts"
+      if [[ "$MODE" == "indepth-transcribe" ]]; then echo "[Process completed]"; exit 0; fi
+      echo "✅ [INDEPTH WORKFLOW] Transcribe finished. Waiting 60 seconds..."
+      sleep 60
+    fi
+    if [[ "$MODE" == "indepth" || "$MODE" == "indepth-podcast" ]]; then
+      NOTEBOOK_PODCAST_INDEPTH_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_podcast_indepth_sources_final.ts"
+      echo "🚀 [INDEPTH WORKFLOW] Running indepth podcast generation..."
+      npx tsx "$NOTEBOOK_PODCAST_INDEPTH_SOURCES_SCRIPT"
+      echo "[Process completed]"; exit 0
+    fi
     ;;
   *)
     echo "Invalid mode selected"
