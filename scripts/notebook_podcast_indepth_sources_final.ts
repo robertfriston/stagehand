@@ -105,7 +105,8 @@ async function main() {
             }
           }
           hostsJson.files = hostsJson.files || [];
-          hostsJson.files.push({
+          // Only add fields from obj that are not already present in the base entry
+          const baseEntry = {
             fileName: audioPath,
             url: obj.url,
             channel: obj.channel,
@@ -113,7 +114,9 @@ async function main() {
             question,
             prompt,
             created: obj.podcast_audio_created,
-          });
+          };
+          const mergedEntry = { ...obj, ...baseEntry };
+          hostsJson.files.push(mergedEntry);
           fs.writeFileSync(hostsJsonPath, JSON.stringify(hostsJson, null, 2));
           fs.writeFileSync(hostsJsonPath, JSON.stringify(hostsJson, null, 2));
           hostIdx++;
