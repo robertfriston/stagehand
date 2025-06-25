@@ -41,10 +41,17 @@
       },
       "comments": {
         "type": "array",
-        "description": "Simulated livestream chat user IDs from a fictional prototype (e.g. User_Skeptic, User_CoderGuru) that share thematic alignment with this video",
+        "description": "3–5 realistic livestream chat comments, each with a user and their message (not just user IDs)",
         "items": {
-          "type": "string"
-        }
+          "type": "object",
+          "properties": {
+            "user": { "type": "string", "description": "Chat username" },
+            "text": { "type": "string", "description": "The actual comment text" }
+          },
+          "required": ["user", "text"]
+        },
+        "minItems": 3,
+        "maxItems": 5
       }
     },
     "required": ["title", "description", "summary", "channel", "url", "questions", "comments"],
