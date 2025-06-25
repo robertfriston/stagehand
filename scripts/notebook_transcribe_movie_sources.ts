@@ -115,6 +115,8 @@ async function run() {
       if (result) {
         item.url = result.url;
         item.channel = result.channel;
+        if (typeof result.duration === 'number') item.youtubeDuration = result.duration;
+        console.log(`    ✅ Found URL: ${item.url} (duration: ${result.duration ?? 'n/a'}s)`);
         console.log(`    ✅ Found URL: ${item.url}`);
       } else {
         console.warn(`    ⚠️ No YouTube result for: ${item.title}`);

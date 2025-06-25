@@ -77,6 +77,7 @@ export interface YouTubeSearchResult {
   url: string;
   channel: string;
   title: string;
+  duration?: number; // in seconds
 }
 
 export async function searchYouTube(
@@ -106,13 +107,37 @@ export async function searchYouTube(
       return null;
     }
 
+    // Fetch video details for duration
+    let durationSeconds: number | undefined = undefined;
+    try {
+      const detailsResp = await client.videos.list({
+        part: ["contentDetails"],
+        id: [videoId],
+      });
+      const details = detailsResp.data.items?.[0]?.contentDetails;
+      if (details && details.duration) {
+        // Parse ISO 8601 duration to seconds
+        durationSeconds = parseISO8601Duration(details.duration);
+      }
+    } catch (err) {
+      console.warn("Could not fetch video duration:", err);
+    }
+
     return {
       url: `https://www.youtube.com/watch?v=${videoId}`,
       channel,
       title,
+      duration: durationSeconds,
     };
   } catch (error) {
     console.error("Error searching YouTube:", error);
     return null;
   }
+}
+
+// Helper to parse ISO 8601 duration (e.g., PT1H2M30S) to seconds
+function parseISO8601Duration(iso: string): number {
+  const regex = /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/;
+  const [, h, m, s] = regex.exec(iso) || [];
+  return (parseInt(h || "0") * 3600) + (parseInt(m || "0") * 60) + (parseInt(s || "0") || 0);
 }
