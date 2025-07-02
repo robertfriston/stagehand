@@ -17,6 +17,8 @@
 # - **8) HOSTS**: Full workflow combining discovery, transcription, and final podcast generation (3, 4, & 7). (`scripts/notebook_discover_sources.ts`, `scripts/notebook_transcribe_sources.ts`, `scripts/notebook_podcast_sources_final.ts`)
 # - **9) MOVIES**: Full workflow for movies. (`scripts/notebook_discover_movie_sources.ts`, `scripts/notebook_transcribe_movie_sources.ts`, `scripts/notebook_podcast_movie_sources_final.ts`)
 # - **10) INDEPTH**: Full workflow for InDepth sources. (`scripts/notebook_discover_indepth_sources.ts`, `scripts/notebook_transcribe_indepth_sources.ts`, `scripts/notebook_podcast_indepth_sources_final.ts`)
+# - **11) CURATED**: Full workflow copy of HOSTS for curation. (`scripts/notebook_discover_curated_sources.ts`, `scripts/notebook_transcribe_curated_sources.ts`, `scripts/notebook_podcast_curated_sources_final.ts`)
+# - **12) AUTOMATED**: Full workflow copy of HOSTS for automation. (`scripts/notebook_discover_automated_sources.ts`, `scripts/notebook_transcribe_automated_sources.ts`, `scripts/notebook_podcast_automated_sources_final.ts`)
 # - **0) Exit**: Exits the script.
 #
 # ## How Persona JSON and NotebookLM URL Selection Works
@@ -67,6 +69,14 @@ if [[ -z "$MODE" ]]; then
   echo "  10.1) INDEPTH - Discover only"
   echo "  10.2) INDEPTH - Transcribe only"
   echo "  10.3) INDEPTH - Podcast only"
+  echo "11) CURATED - FULL WORKFLOW (discover, transcribe, podcast)"
+  echo "  11.1) CURATED - Discover only"
+  echo "  11.2) CURATED - Transcribe only"
+  echo "  11.3) CURATED - Podcast only"
+  echo "12) AUTOMATED - FULL WORKFLOW (discover, transcribe, podcast)"
+  echo "  12.1) AUTOMATED - Discover only"
+  echo "  12.2) AUTOMATED - Transcribe only"
+  echo "  12.3) AUTOMATED - Podcast only"
   echo "0) Exit"
   while true; do
   read -p "#? " mode_choice
@@ -90,6 +100,14 @@ if [[ -z "$MODE" ]]; then
     10.1) MODE="indepth-discover"; break ;;
     10.2) MODE="indepth-transcribe"; break ;;
     10.3) MODE="indepth-podcast"; break ;;
+    11) MODE="curated"; break ;;
+    11.1) MODE="curated-discover"; break ;;
+    11.2) MODE="curated-transcribe"; break ;;
+    11.3) MODE="curated-podcast"; break ;;
+    12) MODE="automated"; break ;;
+    12.1) MODE="automated-discover"; break ;;
+    12.2) MODE="automated-transcribe"; break ;;
+    12.3) MODE="automated-podcast"; break ;;
     0) exit 0 ;;
     *) echo "Invalid option";;
   esac
@@ -114,6 +132,8 @@ ADD_YOUTUBE_SCRIPT="$PROJECT_DIR/scripts/notebooklm_add_youtube.ts"
 MAXENVY_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.maxenvy.json"
 DENNY_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.denny.json"
 JIMJAM_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.jimjam.json"
+CURATED_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.curated.json"
+AUTOMATED_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.automated.json"
 
 
 
@@ -308,6 +328,106 @@ EOF
       NOTEBOOK_PODCAST_INDEPTH_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_podcast_indepth_sources_final.ts"
       echo "🚀 [INDEPTH WORKFLOW] Running indepth podcast generation..."
       npx tsx "$NOTEBOOK_PODCAST_INDEPTH_SOURCES_SCRIPT"
+      echo "[Process completed]"; exit 0
+    fi
+    ;;
+  curated|curated-discover|curated-transcribe|curated-podcast)
+    PERSONA_JSON="$CURATED_JSON"
+    export PERSONA_JSON
+    NOTEBOOK_URL=$(node -e "const fs = require('fs'); const persona = JSON.parse(fs.readFileSync(process.env.PERSONA_JSON || '$MAXENVY_JSON', 'utf8')); console.log(Object.keys(persona.prompts)[0])")
+    export NOTEBOOK_URL
+    CHROME_FLAGS="--remote-debugging-port=9222 --user-data-dir=/tmp/stagehand-chrome-session --no-proxy-server --start-maximized"
+    if [[ "$MODE" == "headless" ]]; then
+      CHROME_FLAGS="$CHROME_FLAGS --headless=new"
+    fi
+    echo "🔁 Launching Chrome..."
+    pgrep -f "Chrome.*9222" > /dev/null || "$CHROME" $CHROME_FLAGS &
+    if [[ "$MODE" != "headless" ]]; then
+      echo "🌐 Opening Notebook..."
+      sleep 3
+      osascript <<EOF
+tell application "Google Chrome"
+  if not (exists window 1) then make new window
+  tell window 1
+    set URL of active tab to "http://127.0.0.1:8080/admin/adminDashboard"
+    make new tab with properties {URL:"$NOTEBOOK_URL"}
+  end tell
+  activate
+end tell
+EOF
+    fi
+    echo "⏳ Waiting for login..."
+    sleep 10
+    echo "DEBUG: [CURATED] PERSONA_JSON=$PERSONA_JSON"
+    echo "DEBUG: [CURATED] NOTEBOOK_URL=$NOTEBOOK_URL"
+    if [[ "$MODE" == "curated" || "$MODE" == "curated-discover" ]]; then
+      echo "🚀 [CURATED WORKFLOW] Running Discover Sources script (Step 3)..."
+      ts-node "$PROJECT_DIR/scripts/notebook_discover_curated_sources.ts"
+      if [[ "$MODE" == "curated-discover" ]]; then echo "[Process completed]"; exit 0; fi
+      echo "✅ [CURATED WORKFLOW] Discover finished. Waiting 60 seconds..."
+      sleep 60
+    fi
+    if [[ "$MODE" == "curated" || "$MODE" == "curated-transcribe" ]]; then
+      echo "🚀 [CURATED WORKFLOW] Running Transcribe Sources script (Step 4)..."
+      ts-node "$PROJECT_DIR/scripts/notebook_transcribe_curated_sources.ts"
+      if [[ "$MODE" == "curated-transcribe" ]]; then echo "[Process completed]"; exit 0; fi
+      echo "✅ [CURATED WORKFLOW] Transcribe finished. Waiting 60 seconds..."
+      sleep 60
+    fi
+    if [[ "$MODE" == "curated" || "$MODE" == "curated-podcast" ]]; then
+      NOTEBOOK_PODCAST_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_podcast_curated_sources_final.ts"
+      echo "🚀 [CURATED WORKFLOW] Running podcast generation (Step 7)..."
+      npx tsx "$NOTEBOOK_PODCAST_SOURCES_SCRIPT"
+      echo "[Process completed]"; exit 0
+    fi
+    ;;
+  automated|automated-discover|automated-transcribe|automated-podcast)
+    PERSONA_JSON="$AUTOMATED_JSON"
+    export PERSONA_JSON
+    NOTEBOOK_URL=$(node -e "const fs = require('fs'); const persona = JSON.parse(fs.readFileSync(process.env.PERSONA_JSON || '$MAXENVY_JSON', 'utf8')); console.log(Object.keys(persona.prompts)[0])")
+    export NOTEBOOK_URL
+    CHROME_FLAGS="--remote-debugging-port=9222 --user-data-dir=/tmp/stagehand-chrome-session --no-proxy-server --start-maximized"
+    if [[ "$MODE" == "headless" ]]; then
+      CHROME_FLAGS="$CHROME_FLAGS --headless=new"
+    fi
+    echo "🔁 Launching Chrome..."
+    pgrep -f "Chrome.*9222" > /dev/null || "$CHROME" $CHROME_FLAGS &
+    if [[ "$MODE" != "headless" ]]; then
+      echo "🌐 Opening Notebook..."
+      sleep 3
+      osascript <<EOF
+tell application "Google Chrome"
+  if not (exists window 1) then make new window
+  tell window 1
+    set URL of active tab to "http://127.0.0.1:8080/admin/adminDashboard"
+    make new tab with properties {URL:"$NOTEBOOK_URL"}
+  end tell
+  activate
+end tell
+EOF
+    fi
+    echo "⏳ Waiting for login..."
+    sleep 10
+    echo "DEBUG: [AUTOMATED] PERSONA_JSON=$PERSONA_JSON"
+    echo "DEBUG: [AUTOMATED] NOTEBOOK_URL=$NOTEBOOK_URL"
+    if [[ "$MODE" == "automated" || "$MODE" == "automated-discover" ]]; then
+      echo "🚀 [AUTOMATED WORKFLOW] Running Discover Sources script (Step 3)..."
+      ts-node "$PROJECT_DIR/scripts/notebook_discover_automated_sources.ts"
+      if [[ "$MODE" == "automated-discover" ]]; then echo "[Process completed]"; exit 0; fi
+      echo "✅ [AUTOMATED WORKFLOW] Discover finished. Waiting 60 seconds..."
+      sleep 60
+    fi
+    if [[ "$MODE" == "automated" || "$MODE" == "automated-transcribe" ]]; then
+      echo "🚀 [AUTOMATED WORKFLOW] Running Transcribe Sources script (Step 4)..."
+      ts-node "$PROJECT_DIR/scripts/notebook_transcribe_automated_sources.ts"
+      if [[ "$MODE" == "automated-transcribe" ]]; then echo "[Process completed]"; exit 0; fi
+      echo "✅ [AUTOMATED WORKFLOW] Transcribe finished. Waiting 60 seconds..."
+      sleep 60
+    fi
+    if [[ "$MODE" == "automated" || "$MODE" == "automated-podcast" ]]; then
+      NOTEBOOK_PODCAST_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_podcast_automated_sources_final.ts"
+      echo "🚀 [AUTOMATED WORKFLOW] Running podcast generation (Step 7)..."
+      npx tsx "$NOTEBOOK_PODCAST_SOURCES_SCRIPT"
       echo "[Process completed]"; exit 0
     fi
     ;;
