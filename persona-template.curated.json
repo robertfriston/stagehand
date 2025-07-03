@@ -1,11 +1,56 @@
 {
   "prompts": {
-    "https://notebooklm.google.com/notebook/EXAMPLE": {
+    "https://notebooklm.google.com/notebook/67f4a7b1-fa80-4f9f-aa35-f514edb59a0a": {
       "discover": [
-        "Prompt 1: Find recent AI job market videos.",
-        "Prompt 2: Discover new roles created by AI.",
-        "Prompt 3: Analyze AI-driven hiring trends."
-      ]
+        "Find recent public YouTube videos with captions exploring what life was like before the internet, especially daily routines, communication, and community life."
+      ],
+      "channels": [
+        {
+          "url": "https://www.youtube.com/watch?v=pTCH5U-H1LM",
+          "embedUrl": "https://www.youtube.com/embed/pTCH5U-H1LM",
+          "title": "Modern Dating: Hopes, Hurdles, and Honest Opinions"
+        }
+      ],
+      "questions": [
+        "1. What frustrations or hidden truths about modern society does this video surface—and how do they reflect broader systemic issues?"
+      ],
+      "hosts": [
+        {
+          "title": "Modern Dating: Hopes, Hurdles, and Honest Opinions",
+          "sub_title": "What's the real frustration behind this clip?",
+          "description": "This segment asks: beneath the jokes or rants, what workplace truth is hitting a nerve?",
+          "line": "You’re watching more than a reaction—it’s a reveal. What’s this video really telling us about modern society?"
+        }
+      ],
+      "created": "2025-06-22T20:22:29.227Z",
+      "viewCount": 60,
+      "dateLastShown": "2025-07-02T18:22:24.335Z"
+    },
+    "https://notebooklm.google.com/notebook/715ad217-d146-4390-8032-70f8e72aa2ac": {
+      "discover": [
+        "Find recent public YouTube videos with captions exploring what life was like before the internet, especially daily routines, communication, and community life."
+      ],
+      "channels": [
+        {
+          "url": "https://www.youtube.com/watch?v=pTCH5U-H1LM",
+          "embedUrl": "https://www.youtube.com/embed/pTCH5U-H1LM",
+          "title": "Modern Dating: Hopes, Hurdles, and Honest Opinions"
+        }
+      ],
+      "questions": [
+        "1. What frustrations or hidden truths about modern society does this video surface—and how do they reflect broader systemic issues?"
+      ],
+      "hosts": [
+        {
+          "title": "Modern Dating: Hopes, Hurdles, and Honest Opinions",
+          "sub_title": "What's the real frustration behind this clip?",
+          "description": "This segment asks: beneath the jokes or rants, what workplace truth is hitting a nerve?",
+          "line": "You’re watching more than a reaction—it’s a reveal. What’s this video really telling us about modern society?"
+        }
+      ],
+      "created": "2025-06-22T20:22:29.227Z",
+      "viewCount": 60,
+      "dateLastShown": "2025-07-02T18:22:24.335Z"
     }
   }
 }

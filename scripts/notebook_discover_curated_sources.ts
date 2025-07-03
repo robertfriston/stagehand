@@ -11,8 +11,10 @@ async function run() {
   const notebookUrls = Object.keys(config.prompts);
   if (notebookUrls.length === 0)
     throw new Error("No NotebookLM URLs found in config.");
-  const notebookUrl = notebookUrls[0];
-  const discoverPrompts = config.prompts[notebookUrl]?.discover;
+  const notebookUrl = process.env.NOTEBOOK_URL ?? notebookUrls[0];
+  const notebookMeta = config.prompts[notebookUrl];
+  console.log("DEBUG: Notebook metadata", notebookMeta);
+  const discoverPrompts = notebookMeta?.discover;
   if (!Array.isArray(discoverPrompts) || discoverPrompts.length === 0)
     throw new Error("No discover prompts found in config.");
   // Print a unique marker from the persona file for debug

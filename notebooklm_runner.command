@@ -336,18 +336,20 @@ EOF
   curated|curated-discover|curated-transcribe|curated-podcast)
     PERSONA_JSON="$CURATED_JSON"
     export PERSONA_JSON
-    NOTEBOOK_URL=$(node -e "const fs = require('fs'); const persona = JSON.parse(fs.readFileSync(process.env.PERSONA_JSON || '$MAXENVY_JSON', 'utf8')); console.log(Object.keys(persona.prompts)[0])")
-    export NOTEBOOK_URL
+    mapfile -t NOTEBOOK_URLS < <(node -e 'const fs=require("fs");const p=JSON.parse(fs.readFileSync(process.env.CURATED_JSON,"utf8"));console.log(Object.keys(p.prompts).join("\\n"));')
     CHROME_FLAGS="--remote-debugging-port=9222 --user-data-dir=/tmp/stagehand-chrome-session --no-proxy-server --start-maximized"
     if [[ "$MODE" == "headless" ]]; then
       CHROME_FLAGS="$CHROME_FLAGS --headless=new"
     fi
     echo "🔁 Launching Chrome..."
     pgrep -f "Chrome.*9222" > /dev/null || "$CHROME" $CHROME_FLAGS &
-    if [[ "$MODE" != "headless" ]]; then
-      echo "🌐 Opening Notebook..."
-      sleep 3
-      osascript <<EOF
+    for url in "${NOTEBOOK_URLS[@]}"; do
+      NOTEBOOK_URL="$url"
+      export NOTEBOOK_URL
+      if [[ "$MODE" != "headless" ]]; then
+        echo "🌐 Opening Notebook $NOTEBOOK_URL..."
+        sleep 3
+        osascript <<EOF
 tell application "Google Chrome"
   if not (exists window 1) then make new window
   tell window 1
@@ -357,31 +359,44 @@ tell application "Google Chrome"
   activate
 end tell
 EOF
-    fi
-    echo "⏳ Waiting for login..."
-    sleep 10
-    echo "DEBUG: [CURATED] PERSONA_JSON=$PERSONA_JSON"
-    echo "DEBUG: [CURATED] NOTEBOOK_URL=$NOTEBOOK_URL"
-    if [[ "$MODE" == "curated" || "$MODE" == "curated-discover" ]]; then
-      echo "🚀 [CURATED WORKFLOW] Running Discover Sources script (Step 3)..."
-      ts-node "$PROJECT_DIR/scripts/notebook_discover_curated_sources.ts"
-      if [[ "$MODE" == "curated-discover" ]]; then echo "[Process completed]"; exit 0; fi
-      echo "✅ [CURATED WORKFLOW] Discover finished. Waiting 60 seconds..."
-      sleep 60
-    fi
-    if [[ "$MODE" == "curated" || "$MODE" == "curated-transcribe" ]]; then
-      echo "🚀 [CURATED WORKFLOW] Running Transcribe Sources script (Step 4)..."
-      ts-node "$PROJECT_DIR/scripts/notebook_transcribe_curated_sources.ts"
-      if [[ "$MODE" == "curated-transcribe" ]]; then echo "[Process completed]"; exit 0; fi
-      echo "✅ [CURATED WORKFLOW] Transcribe finished. Waiting 60 seconds..."
-      sleep 60
-    fi
-    if [[ "$MODE" == "curated" || "$MODE" == "curated-podcast" ]]; then
-      NOTEBOOK_PODCAST_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_podcast_curated_sources_final.ts"
-      echo "🚀 [CURATED WORKFLOW] Running podcast generation (Step 7)..."
-      npx tsx "$NOTEBOOK_PODCAST_SOURCES_SCRIPT"
-      echo "[Process completed]"; exit 0
-    fi
+      fi
+      echo "⏳ Waiting for login..."
+      sleep 10
+      echo "DEBUG: [CURATED] PERSONA_JSON=$PERSONA_JSON"
+      echo "DEBUG: [CURATED] NOTEBOOK_URL=$NOTEBOOK_URL"
+      if [[ "$MODE" == "curated" || "$MODE" == "curated-discover" ]]; then
+        echo "🚀 [CURATED WORKFLOW] Running Discover Sources script (Step 3)..."
+        ts-node "$PROJECT_DIR/scripts/notebook_discover_curated_sources.ts"
+        if [[ "$MODE" == "curated-discover" ]]; then
+          echo "✅ [CURATED WORKFLOW] Discover finished. Waiting 60 seconds..."
+          sleep 60
+          continue
+        fi
+        echo "✅ [CURATED WORKFLOW] Discover finished. Waiting 60 seconds..."
+        sleep 60
+      fi
+      if [[ "$MODE" == "curated" || "$MODE" == "curated-transcribe" ]]; then
+        echo "🚀 [CURATED WORKFLOW] Running Transcribe Sources script (Step 4)..."
+        ts-node "$PROJECT_DIR/scripts/notebook_transcribe_curated_sources.ts"
+        if [[ "$MODE" == "curated-transcribe" ]]; then
+          echo "✅ [CURATED WORKFLOW] Transcribe finished. Waiting 60 seconds..."
+          sleep 60
+          continue
+        fi
+        echo "✅ [CURATED WORKFLOW] Transcribe finished. Waiting 60 seconds..."
+        sleep 60
+      fi
+      if [[ "$MODE" == "curated" || "$MODE" == "curated-podcast" ]]; then
+        NOTEBOOK_PODCAST_SOURCES_SCRIPT="$PROJECT_DIR/scripts/notebook_podcast_curated_sources_final.ts"
+        echo "🚀 [CURATED WORKFLOW] Running podcast generation (Step 7)..."
+        npx tsx "$NOTEBOOK_PODCAST_SOURCES_SCRIPT"
+        echo "✅ [CURATED WORKFLOW] Podcast generation finished."
+        if [[ "$MODE" == "curated-podcast" ]]; then
+          continue
+        fi
+      fi
+    done
+    echo "[Process completed]"; exit 0
     ;;
   automated|automated-discover|automated-transcribe|automated-podcast)
     PERSONA_JSON="$AUTOMATED_JSON"
