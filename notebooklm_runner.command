@@ -1,4 +1,14 @@
+
 #!/bin/bash
+
+# ---
+# NotebookLM Runner (patched for curated mode reliability)
+#
+# - Ensures Bash is used for mapfile
+# - Adds error handling for missing persona JSON
+# - Adds fallback for empty prompts
+# - Adds user guidance if curated persona JSON is empty
+
 
 # ---
 # # NotebookLM Runner
@@ -18,6 +28,43 @@
 # - **9) MOVIES**: Full workflow for movies. (`scripts/notebook_discover_movie_sources.ts`, `scripts/notebook_transcribe_movie_sources.ts`, `scripts/notebook_podcast_movie_sources_final.ts`)
 # - **10) INDEPTH**: Full workflow for InDepth sources. (`scripts/notebook_discover_indepth_sources.ts`, `scripts/notebook_transcribe_indepth_sources.ts`, `scripts/notebook_podcast_indepth_sources_final.ts`)
 # - **11) CURATED**: Full workflow copy of HOSTS for curation. (`scripts/notebook_discover_curated_sources.ts`, `scripts/notebook_transcribe_curated_sources.ts`, `scripts/notebook_podcast_curated_sources_final.ts`)
+
+# --- PATCH: Curated mode reliability ---
+
+CURATED_JSON="scripts/persona-template.curated.json"
+if [[ "$MODE" =~ ^11(\.|$) ]]; then
+  if [[ ! -f "$CURATED_JSON" ]]; then
+    echo "❌ Curated persona JSON not found: $CURATED_JSON"
+    exit 1
+  fi
+  # Check if prompts object is empty
+  PROMPTS_COUNT=$(node -e "const c=require('./$CURATED_JSON');console.log(Object.keys(c.prompts||{}).length)")
+  if [[ "$PROMPTS_COUNT" == "0" ]]; then
+    echo "⚠️  The curated persona JSON has no prompts configured. Please populate the 'prompts' object in $CURATED_JSON before running curated workflows."
+    exit 1
+  fi
+  # POSIX-compatible: populate NOTEBOOK_URLS array
+  NOTEBOOK_URLS=()
+  while IFS= read -r line; do
+    NOTEBOOK_URLS+=("$line")
+  done < <(node -e "const c=require('./$CURATED_JSON');Object.keys(c.prompts||{}).forEach(k=>console.log(k))")
+  if [ "${#NOTEBOOK_URLS[@]}" -eq 0 ]; then
+    echo "❌ No NotebookLM URLs found in curated persona JSON."
+    exit 1
+  fi
+  for NOTEBOOK_URL in "${NOTEBOOK_URLS[@]}"; do
+    echo "🔁 Running curated workflow for notebook: $NOTEBOOK_URL"
+    export PERSONA_JSON="$CURATED_JSON"
+    export NOTEBOOK_URL
+    # Discover
+    node scripts/notebook_discover_curated_sources.ts || { echo "❌ Discover step failed for $NOTEBOOK_URL"; exit 1; }
+    # Transcribe
+    node scripts/notebook_transcribe_curated_sources.ts || { echo "❌ Transcribe step failed for $NOTEBOOK_URL"; exit 1; }
+    # Podcast
+    node scripts/notebook_podcast_curated_sources_final.ts || { echo "❌ Podcast step failed for $NOTEBOOK_URL"; exit 1; }
+  done
+  exit 0
+fi
 # - **12) AUTOMATED**: Full workflow copy of HOSTS for automation. (`scripts/notebook_discover_automated_sources.ts`, `scripts/notebook_transcribe_automated_sources.ts`, `scripts/notebook_podcast_automated_sources_final.ts`)
 # - **0) Exit**: Exits the script.
 #
@@ -132,10 +179,11 @@ ADD_YOUTUBE_SCRIPT="$PROJECT_DIR/scripts/notebooklm_add_youtube.ts"
 MAXENVY_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.maxenvy.json"
 DENNY_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.denny.json"
 JIMJAM_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.jimjam.json"
-# CURATED_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.curated.json"
+CURATED_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.curated.json"
 # AUTOMATED_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.automated.json"
 
-CURATED_JSON="$PROJECT_DIR/scripts/persona-template.curated.json"
+# CURATED_JSON="$PROJECT_DIR/persona-template.curated.json"
+export CURATED_JSON
 AUTOMATED_JSON="$PROJECT_DIR/scripts/persona-template.automated.json"
 
 
@@ -336,7 +384,10 @@ EOF
   curated|curated-discover|curated-transcribe|curated-podcast)
     PERSONA_JSON="$CURATED_JSON"
     export PERSONA_JSON
-    mapfile -t NOTEBOOK_URLS < <(node -e 'const fs=require("fs");const p=JSON.parse(fs.readFileSync(process.env.CURATED_JSON,"utf8"));console.log(Object.keys(p.prompts).join("\\n"));')
+    NOTEBOOK_URLS=()
+    while IFS= read -r line; do
+      NOTEBOOK_URLS+=("$line")
+    done < <(node -e 'const fs=require("fs");const p=JSON.parse(fs.readFileSync(process.env.CURATED_JSON,"utf8"));console.log(Object.keys(p.prompts).join("\n"));')
     CHROME_FLAGS="--remote-debugging-port=9222 --user-data-dir=/tmp/stagehand-chrome-session --no-proxy-server --start-maximized"
     if [[ "$MODE" == "headless" ]]; then
       CHROME_FLAGS="$CHROME_FLAGS --headless=new"
