@@ -180,11 +180,12 @@ MAXENVY_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server
 DENNY_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.denny.json"
 JIMJAM_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.jimjam.json"
 CURATED_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.curated.json"
-# AUTOMATED_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.automated.json"
+AUTOMATED_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.automated.json"
 
 # CURATED_JSON="$PROJECT_DIR/persona-template.curated.json"
 export CURATED_JSON
-AUTOMATED_JSON="$PROJECT_DIR/scripts/persona-template.automated.json"
+# AUTOMATED_JSON="$PROJECT_DIR/persona-template.automated.json"
+export AUTOMATED_JSON
 
 
 cd "$PROJECT_DIR"
