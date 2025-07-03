@@ -110,7 +110,10 @@ async function main() {
       console.error(`Could not parse slot file: ${slotFile}`);
       continue;
     }
-    const notebookUrl = slotEntry.params && slotEntry.params.notebook_url ? normalizeNotebookUrl(slotEntry.params.notebook_url) : "";
+    const notebookUrl =
+      slotEntry.params && slotEntry.params.notebook_url
+        ? normalizeNotebookUrl(slotEntry.params.notebook_url)
+        : "";
     for (const obj of slotArr) {
       if (podcastsGenerated >= MAX_PODCASTS) break;
       if (

@@ -115,7 +115,10 @@ async function main() {
     }
     //
 
-    const notebookUrl = slotEntry.params && slotEntry.params.notebook_url ? normalizeNotebookUrl(slotEntry.params.notebook_url) : "";
+    const notebookUrl =
+      slotEntry.params && slotEntry.params.notebook_url
+        ? normalizeNotebookUrl(slotEntry.params.notebook_url)
+        : "";
     for (const obj of slotArr) {
       if (podcastsGenerated >= MAX_PODCASTS) break;
       if (
