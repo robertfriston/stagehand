@@ -2,6 +2,9 @@ import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
 
+// --- DEBUGGING FLAG ---
+const BLOCK_PODCAST_GENERATION = false; // Set to true to block actual podcast generation for debugging
+
 // Load persona config for destinationFolder lookup
 const personaPath = process.env.PERSONA_JSON;
 type PersonaConfig = {
@@ -22,9 +25,6 @@ if (personaPath && fs.existsSync(personaPath)) {
   }
 }
 
-// --- CONFIG ---
-// (No persona config needed in this script; all variables are now in use or removed)
-
 const slotsDir = path.resolve(__dirname, "..", "..", "media", "slots");
 const INDEX_PATH = path.join(slotsDir, "index.json");
 const MAX_PODCASTS = 8;
@@ -38,7 +38,6 @@ function randomItem<T>(arr: T[]): T {
 }
 
 function getDestDir(type: string, idx: number): string {
-  // e.g., /Users/jobenvy/Documents/UTOPIA/media/hosts/1
   return path.resolve(__dirname, "..", "..", "media", type, String(idx + 1));
 }
 
@@ -54,16 +53,58 @@ function getPersonaDestFolder(notebookUrl: string): string {
   return "hosts";
 }
 
+// --- Get the current notebook URL from environment or persona config ---
+const CURRENT_NOTEBOOK_URL = String(
+  process.env.NOTEBOOK_URL ||
+    (personaConfig && personaConfig.currentNotebookUrl) ||
+    "",
+);
+function normalizeNotebookUrl(url: string): string {
+  // Remove query params for matching
+  return url ? url.split("?")[0] : "";
+}
+
 async function main() {
   const indexRaw = fs.readFileSync(INDEX_PATH, "utf-8");
   const indexArr = JSON.parse(indexRaw);
   let podcastsGenerated = 0;
   let hostIdx = 0;
 
-  for (const slotEntry of indexArr) {
+  if (!CURRENT_NOTEBOOK_URL) {
+    console.error(
+      "❌ No NOTEBOOK_URL set in environment or persona config. Aborting.",
+    );
+    process.exit(1);
+  }
+  const normalizedCurrentNotebookUrl =
+    normalizeNotebookUrl(CURRENT_NOTEBOOK_URL);
+
+  // Only process slot files whose params.notebook_url matches the current notebook
+  type SlotIndexEntry = {
+    slot_file: string;
+    params?: { notebook_url?: string };
+  };
+  const matchingSlotEntries = (indexArr as SlotIndexEntry[]).filter((entry) => {
+    const entryUrl =
+      entry.params && entry.params.notebook_url
+        ? normalizeNotebookUrl(entry.params.notebook_url)
+        : "";
+    return entryUrl === normalizedCurrentNotebookUrl;
+  });
+
+  if (matchingSlotEntries.length === 0) {
+    console.warn("⚠️ No slot files found for current notebook URL.");
+    return;
+  }
+
+  for (const slotEntry of matchingSlotEntries) {
     if (podcastsGenerated >= MAX_PODCASTS) break;
     const slotFile = String(slotEntry.slot_file);
-    if (!slotFile || !fs.existsSync(slotFile)) continue;
+    //
+    if (!slotFile || !fs.existsSync(slotFile)) {
+      console.warn(`Slot file missing or does not exist: ${slotFile}`);
+      continue;
+    }
     const slotRaw = fs.readFileSync(slotFile, "utf-8");
     let slotArr;
     try {
@@ -72,6 +113,8 @@ async function main() {
       console.error(`Could not parse slot file: ${slotFile}`);
       continue;
     }
+    //
+
     for (const obj of slotArr) {
       if (podcastsGenerated >= MAX_PODCASTS) break;
       if (
@@ -90,11 +133,33 @@ async function main() {
         const type = getPersonaDestFolder(obj.url || "");
         obj.destinationFolder = type; // Persist the resolved destinationFolder in the slot object
         const destDir = getDestDir(type, hostIdx);
+
+        // Log only the actual metadata object being used for the prompt
+        console.log(
+          "[PODCAST META]",
+          JSON.stringify(
+            {
+              slotFile,
+              meta: obj,
+              question,
+              prompt,
+              destinationFolder: type,
+              destDir,
+            },
+            null,
+            2,
+          ),
+        );
+
+        if (BLOCK_PODCAST_GENERATION) {
+          console.log(
+            "⚡ BLOCK_PODCAST_GENERATION is enabled. Skipping podcast generation.",
+          );
+          continue;
+        }
+
         if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
         const audioLength = "Default";
-        console.log(
-          `\n🎙️ Generating podcast for: ${obj.title}\nPrompt: ${prompt}`,
-        );
         let audioPath = null;
         try {
           const command = `npx tsx "${NOTEBOOKLM_DOWNLOAD_AUDIO_SCRIPT}" "${prompt.replace(/"/g, '\\"')}" "${audioLength}" "${destDir}"`;

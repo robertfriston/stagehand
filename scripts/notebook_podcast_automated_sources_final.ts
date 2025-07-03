@@ -2,6 +2,9 @@ import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
 
+// --- DEBUGGING FLAG ---
+const BLOCK_PODCAST_GENERATION = false; // Set to true to block actual podcast generation for debugging
+
 // Load persona config for destinationFolder lookup (to match curated script)
 const personaPath = process.env.PERSONA_JSON;
 type PersonaConfig = {
@@ -20,6 +23,17 @@ if (personaPath && fs.existsSync(personaPath)) {
   } catch {
     console.warn("Could not parse persona config at", personaPath);
   }
+}
+
+// --- Get the current notebook URL from environment or persona config ---
+const CURRENT_NOTEBOOK_URL = String(
+  process.env.NOTEBOOK_URL ||
+    (personaConfig && personaConfig.currentNotebookUrl) ||
+    "",
+);
+function normalizeNotebookUrl(url: string): string {
+  // Remove query params for matching
+  return url ? url.split("?")[0] : "";
 }
 
 const slotsDir = path.resolve(__dirname, "..", "..", "media", "slots");
@@ -57,7 +71,34 @@ async function main() {
   let podcastsGenerated = 0;
   let hostIdx = 0;
 
-  for (const slotEntry of indexArr) {
+  if (!CURRENT_NOTEBOOK_URL) {
+    console.error(
+      "❌ No NOTEBOOK_URL set in environment or persona config. Aborting.",
+    );
+    process.exit(1);
+  }
+  const normalizedCurrentNotebookUrl =
+    normalizeNotebookUrl(CURRENT_NOTEBOOK_URL);
+
+  // Only process slot files whose params.notebook_url matches the current notebook
+  type SlotIndexEntry = {
+    slot_file: string;
+    params?: { notebook_url?: string };
+  };
+  const matchingSlotEntries = (indexArr as SlotIndexEntry[]).filter((entry) => {
+    const entryUrl =
+      entry.params && entry.params.notebook_url
+        ? normalizeNotebookUrl(entry.params.notebook_url)
+        : "";
+    return entryUrl === normalizedCurrentNotebookUrl;
+  });
+
+  if (matchingSlotEntries.length === 0) {
+    console.warn("⚠️ No slot files found for current notebook URL.");
+    return;
+  }
+
+  for (const slotEntry of matchingSlotEntries) {
     if (podcastsGenerated >= MAX_PODCASTS) break;
     const slotFile = String(slotEntry.slot_file);
     if (!slotFile || !fs.existsSync(slotFile)) continue;
@@ -89,11 +130,33 @@ async function main() {
         // Write slot file after updating destinationFolder, even if audio is not generated
         fs.writeFileSync(slotFile, JSON.stringify(slotArr, null, 2));
         const destDir = getDestDir(type, hostIdx);
+
+        // Log only the actual metadata object being used for the prompt
+        console.log(
+          "[PODCAST META]",
+          JSON.stringify(
+            {
+              slotFile,
+              meta: obj,
+              question,
+              prompt,
+              destinationFolder: type,
+              destDir,
+            },
+            null,
+            2,
+          ),
+        );
+
+        if (BLOCK_PODCAST_GENERATION) {
+          console.log(
+            "⚡ BLOCK_PODCAST_GENERATION is enabled. Skipping podcast generation.",
+          );
+          continue;
+        }
+
         if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
         const audioLength = "Default";
-        console.log(
-          `\n🎙️ Generating podcast for: ${obj.title}\nPrompt: ${prompt}`,
-        );
         let audioPath = null;
         try {
           const command = `npx tsx "${NOTEBOOKLM_DOWNLOAD_AUDIO_SCRIPT}" "${prompt.replace(/"/g, '\\"')}" "${audioLength}" "${destDir}"`;
