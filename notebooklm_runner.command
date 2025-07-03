@@ -244,14 +244,13 @@ case "$MODE" in
     echo "🔁 Launching Chrome..."
     pgrep -f "Chrome.*9222" > /dev/null || "$CHROME" $CHROME_FLAGS &
     if [[ "$MODE" != "headless" ]]; then
-      echo "🌐 Opening Notebook..."
+      echo "🌐 Opening Notebook tab only..."
       sleep 3
       osascript <<EOF
 tell application "Google Chrome"
   if not (exists window 1) then make new window
   tell window 1
-    set URL of active tab to "http://127.0.0.1:8080/admin/adminDashboard"
-    make new tab with properties {URL:"$NOTEBOOK_URL"}
+    set URL of active tab to "$NOTEBOOK_URL"
   end tell
   activate
 end tell
@@ -294,14 +293,13 @@ EOF
     echo "🔁 Launching Chrome..."
     pgrep -f "Chrome.*9222" > /dev/null || "$CHROME" $CHROME_FLAGS &
     if [[ "$MODE" != "headless" ]]; then
-      echo "🌐 Opening Notebook..."
+      echo "🌐 Opening Notebook tab only..."
       sleep 3
       osascript <<EOF
 tell application "Google Chrome"
   if not (exists window 1) then make new window
   tell window 1
-    set URL of active tab to "http://127.0.0.1:8080/admin/adminDashboard"
-    make new tab with properties {URL:"$NOTEBOOK_URL"}
+    set URL of active tab to "$NOTEBOOK_URL"
   end tell
   activate
 end tell
@@ -344,14 +342,13 @@ EOF
     echo "🔁 Launching Chrome..."
     pgrep -f "Chrome.*9222" > /dev/null || "$CHROME" $CHROME_FLAGS &
     if [[ "$MODE" != "headless" ]]; then
-      echo "🌐 Opening Notebook..."
+      echo "🌐 Opening Notebook tab only..."
       sleep 3
       osascript <<EOF
 tell application "Google Chrome"
   if not (exists window 1) then make new window
   tell window 1
-    set URL of active tab to "http://127.0.0.1:8080/admin/adminDashboard"
-    make new tab with properties {URL:"$NOTEBOOK_URL"}
+    set URL of active tab to "$NOTEBOOK_URL"
   end tell
   activate
 end tell
@@ -399,14 +396,13 @@ EOF
       NOTEBOOK_URL="$url"
       export NOTEBOOK_URL
       if [[ "$MODE" != "headless" ]]; then
-        echo "🌐 Opening Notebook $NOTEBOOK_URL..."
+        echo "🌐 Opening Notebook tab only..."
         sleep 3
         osascript <<EOF
 tell application "Google Chrome"
   if not (exists window 1) then make new window
   tell window 1
-    set URL of active tab to "http://127.0.0.1:8080/admin/adminDashboard"
-    make new tab with properties {URL:"$NOTEBOOK_URL"}
+    set URL of active tab to "$NOTEBOOK_URL"
   end tell
   activate
 end tell
@@ -462,14 +458,13 @@ EOF
     echo "🔁 Launching Chrome..."
     pgrep -f "Chrome.*9222" > /dev/null || "$CHROME" $CHROME_FLAGS &
     if [[ "$MODE" != "headless" ]]; then
-      echo "🌐 Opening Notebook..."
+      echo "🌐 Opening Notebook tab only..."
       sleep 3
       osascript <<EOF
 tell application "Google Chrome"
   if not (exists window 1) then make new window
   tell window 1
-    set URL of active tab to "http://127.0.0.1:8080/admin/adminDashboard"
-    make new tab with properties {URL:"$NOTEBOOK_URL"}
+    set URL of active tab to "$NOTEBOOK_URL"
   end tell
   activate
 end tell
