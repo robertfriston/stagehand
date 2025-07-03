@@ -1,9 +1,28 @@
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
+// --- DEBUGGING FLAG ---
+const BLOCK_PODCAST_GENERATION = false; // Set to true to block actual podcast generation for debugging
 
-// --- CONFIG ---
-// (No persona config needed in this script; all variables are now in use or removed)
+// Load persona config for destinationFolder lookup
+const personaPath = process.env.PERSONA_JSON;
+type PersonaConfig = {
+  prompts?: {
+    [notebookUrl: string]: {
+      destinationFolder?: string;
+      [key: string]: unknown;
+    };
+  };
+  [key: string]: unknown;
+};
+let personaConfig: PersonaConfig | null = null;
+if (personaPath && fs.existsSync(personaPath)) {
+  try {
+    personaConfig = JSON.parse(fs.readFileSync(personaPath, "utf-8"));
+  } catch {
+    console.warn("Could not parse persona config at", personaPath);
+  }
+}
 
 const slotsDir = path.resolve(__dirname, "..", "..", "media", "slots");
 const INDEX_PATH = path.join(slotsDir, "index.json");
@@ -22,13 +41,63 @@ function getDestDir(type: string, idx: number): string {
   return path.resolve(__dirname, "..", "..", "media", type, String(idx + 1));
 }
 
+function getPersonaDestFolder(notebookUrl: string): string {
+  if (
+    personaConfig &&
+    personaConfig.prompts &&
+    personaConfig.prompts[notebookUrl]
+  ) {
+    const dest = personaConfig.prompts[notebookUrl].destinationFolder;
+    if (typeof dest === "string" && dest.trim()) return dest.trim();
+  }
+  return "movies";
+}
+
+// --- Get the current notebook URL from environment or persona config ---
+const CURRENT_NOTEBOOK_URL = String(
+  process.env.NOTEBOOK_URL ||
+    (personaConfig && personaConfig.currentNotebookUrl) ||
+    "",
+);
+function normalizeNotebookUrl(url: string): string {
+  // Remove query params for matching
+  return url ? url.split("?")[0] : "";
+}
+
 async function main() {
   const indexRaw = fs.readFileSync(INDEX_PATH, "utf-8");
   const indexArr = JSON.parse(indexRaw);
   let podcastsGenerated = 0;
   let hostIdx = 0;
 
-  for (const slotEntry of indexArr) {
+  if (!CURRENT_NOTEBOOK_URL) {
+    console.error(
+      "❌ No NOTEBOOK_URL set in environment or persona config. Aborting.",
+    );
+    process.exit(1);
+  }
+  const normalizedCurrentNotebookUrl =
+    normalizeNotebookUrl(CURRENT_NOTEBOOK_URL);
+
+  // Only process slot files whose params.notebook_url matches the current notebook
+  type SlotIndexEntry = {
+    slot_file: string;
+    params?: { notebook_url?: string };
+  };
+  const matchingSlotEntries = (indexArr as SlotIndexEntry[]).filter((entry) => {
+    const entryUrl =
+      entry.params && entry.params.notebook_url
+        ? normalizeNotebookUrl(entry.params.notebook_url)
+        : "";
+    return entryUrl === normalizedCurrentNotebookUrl;
+  });
+
+  if (matchingSlotEntries.length === 0) {
+    console.warn("⚠️ No slot files found for current notebook URL.");
+    return;
+  }
+
+  for (const slotEntry of matchingSlotEntries) {
     if (podcastsGenerated >= MAX_PODCASTS) break;
     const slotFile = String(slotEntry.slot_file);
     if (!slotFile || !fs.existsSync(slotFile)) continue;
@@ -40,6 +109,10 @@ async function main() {
       console.error(`Could not parse slot file: ${slotFile}`);
       continue;
     }
+    const notebookUrl =
+      slotEntry.params && slotEntry.params.notebook_url
+        ? normalizeNotebookUrl(slotEntry.params.notebook_url)
+        : "";
     for (const obj of slotArr) {
       if (podcastsGenerated >= MAX_PODCASTS) break;
       if (
@@ -54,8 +127,9 @@ async function main() {
         const question = randomItem(obj.questions);
         // Prefix prompt with all required metadata
         const prompt = `TITLE: ${obj.title}\nCHANNEL: ${obj.channel}\nURL: ${obj.url}\nQUESTION: ${question}`;
-        // Use movies as default for the MOVIES workflow
-        const type = "movies";
+        // Use destinationFolder from persona if available, else default to movies
+        const type = getPersonaDestFolder(notebookUrl);
+        obj.destinationFolder = type; // Persist the resolved destinationFolder in the slot object
         const destDir = getDestDir(type, hostIdx);
         if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
         const audioLength = "Default";
