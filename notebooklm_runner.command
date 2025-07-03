@@ -132,9 +132,11 @@ ADD_YOUTUBE_SCRIPT="$PROJECT_DIR/scripts/notebooklm_add_youtube.ts"
 MAXENVY_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.maxenvy.json"
 DENNY_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.denny.json"
 JIMJAM_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.jimjam.json"
-CURATED_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.curated.json"
-AUTOMATED_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.automated.json"
+# CURATED_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.curated.json"
+# AUTOMATED_JSON="$HOME/Documents/jobenvy-mono/jobenvy-mono-v2/backend-server/server/admin/static/personas/persona-template.automated.json"
 
+CURATED_JSON="$PROJECT_DIR/scripts/persona-template.curated.json"
+AUTOMATED_JSON="$PROJECT_DIR/scripts/persona-template.automated.json"
 
 
 cd "$PROJECT_DIR"
