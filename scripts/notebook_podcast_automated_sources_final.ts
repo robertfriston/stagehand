@@ -2,8 +2,25 @@ import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
 
-// --- CONFIG ---
-// (No persona config needed in this script; all variables are now in use or removed)
+// Load persona config for destinationFolder lookup (to match curated script)
+const personaPath = process.env.PERSONA_JSON;
+type PersonaConfig = {
+  prompts?: {
+    [notebookUrl: string]: {
+      destinationFolder?: string;
+      [key: string]: unknown;
+    };
+  };
+  [key: string]: unknown;
+};
+let personaConfig: PersonaConfig | null = null;
+if (personaPath && fs.existsSync(personaPath)) {
+  try {
+    personaConfig = JSON.parse(fs.readFileSync(personaPath, "utf-8"));
+  } catch {
+    console.warn("Could not parse persona config at", personaPath);
+  }
+}
 
 const slotsDir = path.resolve(__dirname, "..", "..", "media", "slots");
 const INDEX_PATH = path.join(slotsDir, "index.json");
@@ -20,6 +37,18 @@ function randomItem<T>(arr: T[]): T {
 function getDestDir(type: string, idx: number): string {
   // e.g., /Users/jobenvy/Documents/UTOPIA/media/hosts/1
   return path.resolve(__dirname, "..", "..", "media", type, String(idx + 1));
+}
+
+function getPersonaDestFolder(notebookUrl: string): string {
+  if (
+    personaConfig &&
+    personaConfig.prompts &&
+    personaConfig.prompts[notebookUrl]
+  ) {
+    const dest = personaConfig.prompts[notebookUrl].destinationFolder;
+    if (typeof dest === "string" && dest.trim()) return dest.trim();
+  }
+  return "hosts";
 }
 
 async function main() {
@@ -54,8 +83,11 @@ async function main() {
         const question = randomItem(obj.questions);
         // Prefix prompt with all required metadata
         const prompt = `TITLE: ${obj.title}\nCHANNEL: ${obj.channel}\nURL: ${obj.url}\nQUESTION: ${question}`;
-        // Use hosts as default, or podcasts if you want to alternate
-        const type = "hosts";
+        // Use destinationFolder from persona if available, else default to hosts
+        const type = getPersonaDestFolder(obj.url || "");
+        obj.destinationFolder = type; // Persist the resolved destinationFolder in the slot object
+        // Write slot file after updating destinationFolder, even if audio is not generated
+        fs.writeFileSync(slotFile, JSON.stringify(slotArr, null, 2));
         const destDir = getDestDir(type, hostIdx);
         if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
         const audioLength = "Default";
@@ -91,7 +123,6 @@ async function main() {
           obj.podcast_audio_path = audioPath;
           obj.podcast_audio_created = new Date().toISOString();
           podcastsGenerated++;
-          fs.writeFileSync(slotFile, JSON.stringify(slotArr, null, 2));
           // --- Update hosts.json ---
           const hostsJsonPath = path.join(destDir, "hosts.json");
           let hostsJson: { files: Array<Record<string, unknown>> } = {
@@ -117,7 +148,6 @@ async function main() {
           };
           const mergedEntry = { ...obj, ...baseEntry };
           hostsJson.files.push(mergedEntry);
-          fs.writeFileSync(hostsJsonPath, JSON.stringify(hostsJson, null, 2));
           fs.writeFileSync(hostsJsonPath, JSON.stringify(hostsJson, null, 2));
           hostIdx++;
           console.log(
