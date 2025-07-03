@@ -1,7 +1,18 @@
 import puppeteer from "puppeteer-core";
 import fs from "fs";
 
+// Set this flag to true to skip the discovery workflow and just wait 60 seconds
+const SKIP_DISCOVERY_WORKFLOW = true;
+
 async function run() {
+  if (SKIP_DISCOVERY_WORKFLOW) {
+    console.log(
+      "⚡ SKIP_DISCOVERY_WORKFLOW is enabled. Skipping discovery logic and waiting 60 seconds...",
+    );
+    await new Promise((r) => setTimeout(r, 60000));
+    console.log("✅ Wait complete. Exiting.");
+    return;
+  }
   // Load persona config and extract discover prompts
   const personaPath = process.env.PERSONA_JSON;
   if (!personaPath) throw new Error("PERSONA_JSON env var not set");
@@ -11,8 +22,10 @@ async function run() {
   const notebookUrls = Object.keys(config.prompts);
   if (notebookUrls.length === 0)
     throw new Error("No NotebookLM URLs found in config.");
-  const notebookUrl = notebookUrls[0];
-  const discoverPrompts = config.prompts[notebookUrl]?.discover;
+  const notebookUrl = process.env.NOTEBOOK_URL ?? notebookUrls[0];
+  const notebookMeta = config.prompts[notebookUrl];
+  console.log("DEBUG: Notebook metadata", notebookMeta);
+  const discoverPrompts = notebookMeta?.discover;
   if (!Array.isArray(discoverPrompts) || discoverPrompts.length === 0)
     throw new Error("No discover prompts found in config.");
   // Print a unique marker from the persona file for debug
