@@ -115,6 +115,7 @@ async function main() {
     }
     //
 
+    const notebookUrl = slotEntry.params && slotEntry.params.notebook_url ? normalizeNotebookUrl(slotEntry.params.notebook_url) : "";
     for (const obj of slotArr) {
       if (podcastsGenerated >= MAX_PODCASTS) break;
       if (
@@ -130,7 +131,7 @@ async function main() {
         // Prefix prompt with all required metadata
         const prompt = `TITLE: ${obj.title}\nCHANNEL: ${obj.channel}\nURL: ${obj.url}\nQUESTION: ${question}`;
         // Use destinationFolder from persona if available, else default to hosts
-        const type = getPersonaDestFolder(obj.url || "");
+        const type = getPersonaDestFolder(notebookUrl);
         obj.destinationFolder = type; // Persist the resolved destinationFolder in the slot object
         const destDir = getDestDir(type, hostIdx);
 
